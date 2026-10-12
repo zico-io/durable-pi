@@ -18,7 +18,9 @@ npm run dev                          # Vite middleware with hot reload (no build
 | Option | Default | Meaning |
 |---|---|---|
 | `--port` / `DPI_HUB_PORT` | `4781` | hub port |
-| `--host` / `DPI_HUB_HOST` | `127.0.0.1` | bind address. Anything else lets the network drive every device the hub holds tokens for |
+| `--host` / `DPI_HUB_HOST` | `127.0.0.1` | bind address. Anything else lets the network drive every device the hub holds tokens for, unless the tailnet gate is on |
+| `--tailnet-allow` / `DPI_HUB_TAILNET_ALLOW` | | comma-separated Tailscale logins, e.g. `you@example.com`. When set, every request (UI and API) must come from an untagged tailnet node logged in as one of them, as tailscaled's whois reports for the connection's source address. Others get 403; 503 when tailscaled cannot answer. The MagicDNS name joins the allowed Host headers |
+| `DPI_TAILSCALED_SOCKET` | `/run/tailscale/tailscaled.sock` | tailscaled's LocalAPI socket, used by the tailnet gate |
 | `DPI_HOME` | `~/.dpi` | where `network.sqlite` lives |
 | `DPI_NETWORK_FILE` | `dpi-network.yaml`, found by walking up from the app | devices seeded into the registry at boot |
 
