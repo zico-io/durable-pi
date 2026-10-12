@@ -2,34 +2,31 @@
   "name": "dpi-playground",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "apps/*"
-  ],
   "scripts": {
-    "dev": "tsx apps/dpi-playground-hub/src/main.ts --dev",
-    "start": "tsx apps/dpi-playground-hub/src/main.ts",
-    "build": "vue-tsc --noEmit -p apps/dpi-playground-fe/tsconfig.json && tsc --noEmit -p apps/dpi-playground-hub/tsconfig.json && vite build --config apps/dpi-playground-fe/vite.config.ts",
-    "lint": "oxlint apps tests",
-    "fmt": "oxfmt apps tests",
+    "dev": "tsx server.ts --dev",
+    "start": "tsx server.ts",
+    "build": "next build",
+    "lint": "oxlint src tests server.ts",
+    "fmt": "oxfmt src tests server.ts",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "dompurify": "^3.2.0",
-    "express": "^5.1.0",
-    "lucide-vue-next": "^0.468.0",
+    "jotai": "^3.0.1",
+    "lucide-react": "0.468.0",
     "marked": "^17.0.0",
-    "vue": "3.5.43"
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@playwright/test": "latest",
-    "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
-    "@vitejs/plugin-vue": "latest",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "oxfmt": "0.72.0",
     "oxlint": "1.87.0",
     "tsx": "latest",
-    "typescript": "5.9.3",
-    "vite": "8.3.2",
-    "vue-tsc": "latest"
+    "typescript": "5.9.3"
   }
 }

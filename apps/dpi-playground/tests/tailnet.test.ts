@@ -56,13 +56,7 @@ test("tailnet gate: admits only allowed, untagged tailnet users and fails closed
   const port = await freePort();
   const hub = spawn(
     process.execPath,
-    [
-      "--import",
-      "tsx",
-      resolve(import.meta.dirname, "../apps/dpi-playground-hub/src/main.ts"),
-      "--port",
-      String(port),
-    ],
+    ["--import", "tsx", resolve(import.meta.dirname, "../server.ts"), "--port", String(port)],
     {
       env: {
         ...process.env,

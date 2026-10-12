@@ -17,7 +17,7 @@ start *ARGS:
     @{{ free-port }} {{ port }}
     DPI_HUB_PORT={{ port }} npm start -- "$@"
 
-# Serve with Vite hot reload (frees the port)
+# Serve with Next.js hot reload (frees the port)
 dev *ARGS:
     @{{ free-port }} {{ port }}
     DPI_HUB_PORT={{ port }} npm run dev -- "$@"

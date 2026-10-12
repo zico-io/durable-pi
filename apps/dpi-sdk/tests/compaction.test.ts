@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compactionFits, compactionThresholds, DEFAULT_COMPACTION, defaultCompaction } from "../src/api.js";
+import { compactionFits, compactionThresholds, DEFAULT_COMPACTION, defaultCompaction } from "../src/api";
 
 test("compaction defaults sit at 200k and 250k, and fall back to pi-durable's margins on small windows", () => {
   assert.deepEqual(compactionThresholds(1_000_000, defaultCompaction(1_000_000)), { auto: 200_000, wait: 250_000 });

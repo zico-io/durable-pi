@@ -24,7 +24,7 @@ dpi-network.example.yaml # template: defaults + the local device, commented ssh 
 .env.example             # AI_GATEWAY_API_KEY (copied into each device's backend.env), optional TypeSafe and ElevenLabs settings
 apps/dpi-sdk/            # contract, client, models, registry, ops drivers (scripts/net.ts)
 apps/dpi-backend/        # the device server (port 4780)
-apps/dpi-playground/     # hub + Vue web UI (port 4781)
+apps/dpi-playground/     # hub + Next.js web UI (port 4781)
 apps/dpi-tui/            # terminal client
 apps/proactive-dpi-demo/ # the hook: proactive incident agent (just proactive install, reset, build)
 ```

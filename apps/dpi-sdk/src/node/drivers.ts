@@ -4,11 +4,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
-import type { DeviceKind } from "../api.js";
-import { DpiClient } from "../client.js";
-import { syncConfigToRegistry, type NetDevice, type NetworkConfig } from "./config.js";
-import { NetworkRegistry } from "./registry.js";
-import { exeDev, q, remote, rsync, run, shPath, sleep } from "./ops.js";
+import type { DeviceKind } from "../api";
+import { DpiClient } from "../client";
+import { syncConfigToRegistry, type NetDevice, type NetworkConfig } from "./config";
+import { NetworkRegistry } from "./registry";
+import { exeDev, q, remote, rsync, run, shPath, sleep } from "./ops";
 
 export interface DriverContext {
   config: NetworkConfig;

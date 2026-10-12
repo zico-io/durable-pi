@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { NetworkRegistry, toPublic } from "../src/node/registry.js";
+import { NetworkRegistry, toPublic } from "../src/node/registry";
 
 const token = "dpi_" + "x".repeat(40);
 

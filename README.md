@@ -110,7 +110,7 @@ The playbook, tools, hooks, Jev questions, thresholds and model are all yours to
 | Piece | Where it runs | Owns |
 |---|---|---|
 | **`dpi-backend`** | every device, port 4780; a launchd or systemd service on remote machines | the harnesses, `~/.dpi/backend/catalog.sqlite`, one `sessions/<id>/agent.sqlite` per session, the device's shared App State, the bearer token in `~/.dpi/backend.env` |
-| **hub** (`apps/dpi-playground`) | your laptop, `127.0.0.1:4781` | the device registry and tokens in `~/.dpi/network.sqlite`, a token-injecting REST proxy, one multiplexed SSE stream per browser tab, the Vue client |
+| **hub** (`apps/dpi-playground`) | your laptop, `127.0.0.1:4781` | the device registry and tokens in `~/.dpi/network.sqlite`, a token-injecting REST proxy, one multiplexed SSE stream per browser tab, the web client (Next.js and React) |
 | **`dpi-tui`** | any terminal | nothing: it reads a device's URL and token from the registry and talks to the device directly |
 | **`dpi-sdk`** | inside all of the above | the v1 wire contract, `DpiClient`, the SSE reader, the `AgentModel` and `SessionModel` reducers, transcript items, the registry and the ops drivers. See [`apps/dpi-sdk/README.md`](apps/dpi-sdk/README.md) |
 
@@ -281,9 +281,11 @@ durable-pi/
 │   │   ├── API.md                     # every route, stream and recipe
 │   │   ├── prompts/                   # built-in prompts for the system-prompts extension
 │   │   └── deploy/                    # launchd plist, systemd unit, backend.env.example
-│   ├── dpi-playground/                # the hub + web client
-│   │   ├── apps/dpi-playground-hub/   # YAML seed, device monitor, token proxy, stream mux, guard
-│   │   ├── apps/dpi-playground-fe/    # Vue 3: network tree, agent view, inspector tabs
+│   ├── dpi-playground/                # the hub + web client, one Next.js app
+│   │   ├── server.ts                  # entry: options, tailnet gate, Next request handler
+│   │   ├── src/hub/                   # YAML seed, device monitor, token proxy, stream mux, guard
+│   │   ├── src/app/api/               # the hub's routes
+│   │   ├── src/components/            # React: network tree, agent view, inspector tabs
 │   │   └── tests/                     # hub test, faux-device UI suite, per-device suites, e2e scenario
 │   ├── dpi-tui/                       # pi-like terminal client on @earendil-works/pi-tui
 │   └── proactive-dpi-demo/            # the hook: Jev log watcher, incident agents, durable deploy approval

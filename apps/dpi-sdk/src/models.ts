@@ -1,5 +1,5 @@
 // Client-side reducers. Each consumes stream frames and exposes plain state plus change
-// notifications, so Vue, the TUI or any other renderer can sit on top without knowing the wire.
+// notifications, so the web UI, the TUI or any other renderer can sit on top without knowing the wire.
 import type {
   AgentSummary,
   DeviceStatus,
@@ -17,8 +17,8 @@ import type {
   WireMessageChange,
   WireSnapshotEvent,
   WireUsageState,
-} from "./api.js";
-import { toTranscript, type LiveTool, type TranscriptItem } from "./transcript.js";
+} from "./api";
+import { toTranscript, type LiveTool, type TranscriptItem } from "./transcript";
 
 type Listener = () => void;
 

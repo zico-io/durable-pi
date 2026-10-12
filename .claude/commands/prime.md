@@ -8,7 +8,7 @@ Orient yourself in the Durable Pi repo. Durable pi agents live on a device that 
 
 ## Workflow
 
-1. Run `git ls-files`, skipping `ai_docs/`, `images/`, icons and lockfiles. The apps are `apps/dpi-sdk`, `apps/dpi-backend`, `apps/dpi-playground` (hub and Vue client), `apps/dpi-tui` and `apps/proactive-dpi-demo`.
+1. Run `git ls-files`, skipping `ai_docs/`, `images/`, icons and lockfiles. The apps are `apps/dpi-sdk`, `apps/dpi-backend`, `apps/dpi-playground` (hub and Next.js client), `apps/dpi-tui` and `apps/proactive-dpi-demo`.
 2. Read `README.md`, `justfile`, `just/*/mod.just` and `dpi-network.example.yaml`. The real `dpi-network.yaml` is gitignored and is the only place that names machines. Every device recipe takes a device id from it, and only exe.dev VMs named there may be touched.
 3. Read `apps/dpi-backend/README.md` and `apps/dpi-backend/API.md`, then skim `apps/dpi-backend/src/store.ts`, `routes.ts`, `streams.ts`, `jobs.ts` and `addons.ts`.
 4. Read `apps/dpi-sdk/README.md`, then `apps/dpi-sdk/src/api.ts` (wire contract), `client.ts` (`DpiClient`, `follow`) and `models.ts` (`AgentModel`, `SessionModel`, network tree). The web client and the TUI render the same transcript items from these.
