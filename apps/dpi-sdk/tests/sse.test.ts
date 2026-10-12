@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readSse, parseBlock } from "../src/sse.ts";
-import { DpiError } from "../src/errors.ts";
+import { readSse, parseBlock } from "../src/sse";
+import { DpiError } from "../src/errors";
 
 function streamOf(chunks: string[], delayMs = 0, hold = false) {
   const enc = new TextEncoder();

@@ -1,4 +1,4 @@
-import type { ErrorCode } from "./api.ts";
+import type { ErrorCode } from "./api";
 
 /** Every client-side failure: `offline` when the device can't be reached, otherwise the server's error code. */
 export class DpiError extends Error {

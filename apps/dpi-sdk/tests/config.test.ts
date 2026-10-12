@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DEFAULT_START_DIR, parseNetworkConfig, syncConfigToRegistry } from "../src/node/config.ts";
-import { NetworkRegistry } from "../src/node/registry.ts";
+import { DEFAULT_START_DIR, parseNetworkConfig, syncConfigToRegistry } from "../src/node/config";
+import { NetworkRegistry } from "../src/node/registry";
 
 test("dpi-network.example.yaml parses: defaults plus the local device", () => {
   const config = parseNetworkConfig(readFileSync(new URL("../../../dpi-network.example.yaml", import.meta.url), "utf8"));

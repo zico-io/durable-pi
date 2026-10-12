@@ -17,8 +17,8 @@ import type {
   WireMessageChange,
   WireSnapshotEvent,
   WireUsageState,
-} from "./api.ts";
-import { toTranscript, type LiveTool, type TranscriptItem } from "./transcript.ts";
+} from "./api";
+import { toTranscript, type LiveTool, type TranscriptItem } from "./transcript";
 
 type Listener = () => void;
 

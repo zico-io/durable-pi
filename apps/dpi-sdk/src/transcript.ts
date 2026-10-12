@@ -9,7 +9,7 @@ import type {
   WireToolSlot,
   WireUsage,
   WireUsageState,
-} from "./api.ts";
+} from "./api";
 
 export type ToolStatus = "pending" | "running" | "done" | "error";
 

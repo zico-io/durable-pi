@@ -1,4 +1,4 @@
-import { DpiError } from "./errors.ts";
+import { DpiError } from "./errors";
 
 export interface SseMessage {
   event: string;

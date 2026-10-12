@@ -2,8 +2,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
-import type { DeviceKind } from "../api.ts";
-import { DEVICE_ID, DEVICE_KINDS, NetworkRegistry, normalizeUrl } from "./registry.ts";
+import type { DeviceKind } from "../api";
+import { DEVICE_ID, DEVICE_KINDS, NetworkRegistry, normalizeUrl } from "./registry";
 
 export const NETWORK_FILE = "dpi-network.yaml";
 export type ServiceKind = "launchd" | "systemd";

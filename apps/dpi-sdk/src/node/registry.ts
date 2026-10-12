@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { DeviceInfo, DeviceKind, DeviceStatus, DeviceTree, NetworkDevice } from "../api.ts";
+import type { DeviceInfo, DeviceKind, DeviceStatus, DeviceTree, NetworkDevice } from "../api";
 
 export const dpiHome = () => process.env.DPI_HOME ?? join(homedir(), ".dpi");
 export const DEVICE_ID = /^[a-z0-9][a-z0-9-]{0,31}$/;
