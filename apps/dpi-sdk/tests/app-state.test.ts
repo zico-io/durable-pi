@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { changeState, readState, type AppState } from "../src/app-state.js";
+import { changeState, readState, type AppState } from "../src/app-state.ts";
 
 test("App State supports structure changes, nested CRUD, arrays and numeric adjustments", () => {
   let state: AppState = {};

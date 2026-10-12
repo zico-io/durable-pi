@@ -2,8 +2,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
-import type { DeviceKind } from "../api.js";
-import { DEVICE_ID, DEVICE_KINDS, NetworkRegistry, normalizeUrl } from "./registry.js";
+import type { DeviceKind } from "../api.ts";
+import { DEVICE_ID, DEVICE_KINDS, NetworkRegistry, normalizeUrl } from "./registry.ts";
 
 export const NETWORK_FILE = "dpi-network.yaml";
 export type ServiceKind = "launchd" | "systemd";
@@ -44,7 +44,8 @@ type Raw = Record<string, unknown>;
 
 function findNetworkFile(start = process.cwd()): string | undefined {
   if (process.env.DPI_NETWORK_FILE) return resolve(process.env.DPI_NETWORK_FILE);
-  let dir = resolve(start);
+  // The config lives in the user's tree, not in a bundle (turbopackIgnore keeps Next from tracing it).
+  let dir = resolve(/*turbopackIgnore: true*/ start);
   while (true) {
     const candidate = join(dir, NETWORK_FILE);
     if (existsSync(candidate)) return candidate;
@@ -148,13 +149,13 @@ export function loadNetworkConfig(start?: string): NetworkConfig {
     throw Error(
       `No ${NETWORK_FILE} found from ${start ?? process.cwd()} upward. Create it from the template: cp dpi-network.example.yaml ${NETWORK_FILE}`,
     );
-  return parseNetworkConfig(readFileSync(file, "utf8"), file);
+  return parseNetworkConfig(readFileSync(/*turbopackIgnore: true*/ file, "utf8"), file);
 }
 
 /** Like loadNetworkConfig, but a missing file means "no config devices". */
 export function tryLoadNetworkConfig(start?: string): NetworkConfig | undefined {
   const file = findNetworkFile(start);
-  return file ? parseNetworkConfig(readFileSync(file, "utf8"), file) : undefined;
+  return file ? parseNetworkConfig(readFileSync(/*turbopackIgnore: true*/ file, "utf8"), file) : undefined;
 }
 
 /** Upsert config devices into the registry (source: config) and drop config devices removed from the file. */

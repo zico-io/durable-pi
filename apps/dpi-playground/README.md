@@ -41,7 +41,7 @@ npm run dev                          # Next.js dev server with hot reload (no bu
 
 ```text
 server.ts                       entry: options, tailnet gate per connection, the Next.js request handler
-next.config.ts                  webpack build: the SDK's NodeNext imports (./x.js for ./x.ts) need extensionAlias
+next.config.ts                  Turbopack rooted at apps/, so the SDK in ../dpi-sdk is part of the build
 src/
   instrumentation.ts            starts the hub with the server
   proxy.ts                      the Host, origin and JSON guard for /api

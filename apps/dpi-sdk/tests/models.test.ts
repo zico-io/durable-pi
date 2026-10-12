@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { AgentModel, SessionModel, networkTree, lineage } from "../src/models.js";
-import { toMarkdown, toTranscript, sumUsage } from "../src/transcript.js";
+import { AgentModel, SessionModel, networkTree, lineage } from "../src/models.ts";
+import { toMarkdown, toTranscript, sumUsage } from "../src/transcript.ts";
 import type {
   AgentSummary,
   NetworkDevice,
@@ -9,7 +9,7 @@ import type {
   WireEntry,
   WireSnapshotEvent,
   WireUsage,
-} from "../src/api.js";
+} from "../src/api.ts";
 
 const usage: WireUsage = {
   input: 10,

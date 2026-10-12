@@ -18,9 +18,9 @@ import type {
   TaskOutcome,
   WhenBusy,
   WireEntry,
-} from "./api.js";
-import { DpiError } from "./errors.js";
-import { readSse } from "./sse.js";
+} from "./api.ts";
+import { DpiError } from "./errors.ts";
+import { readSse } from "./sse.ts";
 
 export interface RequestOptions {
   signal?: AbortSignal;

@@ -1,10 +1,10 @@
 // Network ops CLI behind every `just` recipe. Reads dpi-network.yaml, dispatches to the driver
 // for the device's kind. Usage: net <verb> [device] [args...]
-import { DpiClient } from "../src/client.js";
-import { DpiError } from "../src/errors.js";
-import { loadNetworkConfig, syncConfigToRegistry, type NetDevice } from "../src/node/config.js";
-import { drivers, type DriverContext, type Verb } from "../src/node/drivers.js";
-import { NetworkRegistry } from "../src/node/registry.js";
+import { DpiClient } from "../src/client.ts";
+import { DpiError } from "../src/errors.ts";
+import { loadNetworkConfig, syncConfigToRegistry, type NetDevice } from "../src/node/config.ts";
+import { drivers, type DriverContext, type Verb } from "../src/node/drivers.ts";
+import { NetworkRegistry } from "../src/node/registry.ts";
 
 const [verb = "help", id, ...args] = process.argv.slice(2);
 const log = (line: string) => console.log(line);

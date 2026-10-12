@@ -1,7 +1,7 @@
 // Process helpers for the network ops CLI: local commands, remote shell scripts over ssh
 // (scripts and secrets travel on stdin, never argv), rsync and the exe.dev control plane.
 import { spawn } from "node:child_process";
-import type { NetDevice } from "./config.js";
+import type { NetDevice } from "./config.ts";
 
 export interface RunResult {
   code: number;

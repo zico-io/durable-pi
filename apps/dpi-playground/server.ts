@@ -43,7 +43,6 @@ const gate = tailnetAllow.size ? tailnetGate(tailscaled, tailnetAllow) : undefin
 const upgrades = new EventEmitter();
 const app = next({
   dev,
-  webpack: true,
   dir: fileURLToPath(new URL(".", import.meta.url)),
   hostname: host,
   port,

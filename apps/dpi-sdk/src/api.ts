@@ -5,7 +5,7 @@
 // The Wire* event types below copy their JSON shape; apps/dpi-backend/src/contract-check.ts
 // fails the build if pi-durable's own types stop fitting them.
 
-import type { JobDef } from "./jobs.js";
+import type { JobDef } from "./jobs.ts";
 
 export const API_VERSION = 1 as const;
 

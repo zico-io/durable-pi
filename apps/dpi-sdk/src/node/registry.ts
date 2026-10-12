@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { DeviceInfo, DeviceKind, DeviceStatus, DeviceTree, NetworkDevice } from "../api.js";
+import type { DeviceInfo, DeviceKind, DeviceStatus, DeviceTree, NetworkDevice } from "../api.ts";
 
 export const dpiHome = () => process.env.DPI_HOME ?? join(homedir(), ".dpi");
 export const DEVICE_ID = /^[a-z0-9][a-z0-9-]{0,31}$/;
@@ -90,7 +90,7 @@ export class NetworkRegistry {
   constructor(path = join(dpiHome(), "network.sqlite")) {
     this.path = path;
     mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-    const fresh = !existsSync(path);
+    const fresh = !existsSync(/*turbopackIgnore: true*/ path);
     this.db = new DatabaseSync(path);
     if (fresh) chmodSync(path, 0o600);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000;
