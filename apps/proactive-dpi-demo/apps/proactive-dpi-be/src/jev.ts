@@ -1,4 +1,4 @@
-// Minimal Jev client: TypeSafe System One directly, or through OpenRouter's decisions endpoint.
+// Minimal Jev client: TypeSafe System One directly, or through Vercel AI Gateway's System One endpoint.
 export type ChoiceAnswer = {
   type: "choice";
   choice: string;
@@ -24,7 +24,7 @@ export type JevResult = {
 const RETRY = new Set([429, 502, 503, 529]);
 
 export class Jev {
-  readonly provider: "typesafe" | "openrouter";
+  readonly provider: "typesafe" | "vercel-ai-gateway";
   private readonly endpoint: string;
   private readonly key: string;
   private readonly model: string;
@@ -35,12 +35,12 @@ export class Jev {
       this.endpoint = "https://api.typesafe.ai/v1/systemone";
       this.key = process.env.TYPESAFE_API_KEY;
       this.model = "jev-latest";
-    } else if (process.env.OPENROUTER_API_KEY) {
-      this.provider = "openrouter";
-      this.endpoint = "https://openrouter.ai/api/alpha/decisions";
-      this.key = process.env.OPENROUTER_API_KEY;
-      this.model = "~typesafe/jev-latest";
-    } else throw Error("Jev needs TYPESAFE_API_KEY or OPENROUTER_API_KEY");
+    } else if (process.env.AI_GATEWAY_API_KEY) {
+      this.provider = "vercel-ai-gateway";
+      this.endpoint = "https://ai-gateway.vercel.sh/typesafe/v1/systemone";
+      this.key = process.env.AI_GATEWAY_API_KEY;
+      this.model = "typesafe-ai/jev";
+    } else throw Error("Jev needs TYPESAFE_API_KEY or AI_GATEWAY_API_KEY");
   }
 
   async ask(state: unknown, questions: Record<string, Question>): Promise<JevResult> {

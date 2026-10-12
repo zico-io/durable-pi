@@ -12,6 +12,7 @@ import { StreamMux } from "./mux.js";
 import { proxy } from "./proxy.js";
 import { guard } from "./guard.js";
 import { seedFromConfig } from "./seed.js";
+import { selfDnsName, tailnetGate } from "./tailnet.js";
 
 const args = process.argv.slice(2);
 const option = (key: string, fallback: string) => {
@@ -23,6 +24,13 @@ const option = (key: string, fallback: string) => {
 const appDir = fileURLToPath(new URL("../../../", import.meta.url));
 const port = Number(option("--port", process.env.DPI_HUB_PORT ?? "4781"));
 const host = option("--host", process.env.DPI_HUB_HOST ?? "127.0.0.1");
+const tailnetAllow = new Set(
+  option("--tailnet-allow", process.env.DPI_HUB_TAILNET_ALLOW ?? "")
+    .split(",")
+    .map((login) => login.trim().toLowerCase())
+    .filter(Boolean),
+);
+const tailscaled = process.env.DPI_TAILSCALED_SOCKET ?? "/run/tailscale/tailscaled.sock";
 
 const registry = new NetworkRegistry();
 const configFile = seedFromConfig(registry, appDir);
@@ -41,6 +49,10 @@ if (host !== "127.0.0.1" && host !== "localhost") {
   for (const addresses of Object.values(networkInterfaces()))
     for (const a of addresses ?? [])
       if (a.family === "IPv4") allowedHosts.add(`${a.address}:${port}`);
+}
+if (tailnetAllow.size) {
+  const dnsName = await selfDnsName(tailscaled);
+  if (dnsName) allowedHosts.add(`${dnsName}:${port}`);
 }
 
 const err = (code: string, message: string) => ({ error: { code, message } });
@@ -61,6 +73,7 @@ const safe =
 
 const app = express();
 app.disable("x-powered-by");
+if (tailnetAllow.size) app.use(tailnetGate(tailscaled, tailnetAllow));
 app.use("/api", guard(allowedHosts), express.json({ limit: "256kb" }));
 
 app.get("/api/network", (_req, res) => res.json({ configFile, devices: monitor.network() }));
@@ -121,7 +134,8 @@ server.listen(port, host, () => {
         .join(", ") || "none"
     }`,
   );
-  if (host !== "127.0.0.1" && host !== "localhost")
+  if (tailnetAllow.size) console.log(`tailnet identity required: ${[...tailnetAllow].join(", ")}`);
+  else if (host !== "127.0.0.1" && host !== "localhost")
     console.warn(
       `WARNING: the hub is listening on ${host}. Anyone who can reach it can drive every device it holds tokens for.`,
     );

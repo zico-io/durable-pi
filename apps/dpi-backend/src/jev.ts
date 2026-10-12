@@ -16,10 +16,10 @@ export async function askJev(
 ): Promise<Record<string, JevAnswer>> {
   const [endpoint, key, model] = process.env.TYPESAFE_API_KEY
     ? ["https://api.typesafe.ai/v1/systemone", process.env.TYPESAFE_API_KEY, "jev-latest"]
-    : process.env.OPENROUTER_API_KEY
-      ? ["https://openrouter.ai/api/alpha/decisions", process.env.OPENROUTER_API_KEY, "~typesafe/jev-latest"]
+    : process.env.AI_GATEWAY_API_KEY
+      ? ["https://ai-gateway.vercel.sh/typesafe/v1/systemone", process.env.AI_GATEWAY_API_KEY, "typesafe-ai/jev"]
       : [];
-  if (!endpoint) throw Error("Jev needs TYPESAFE_API_KEY or OPENROUTER_API_KEY");
+  if (!endpoint) throw Error("Jev needs TYPESAFE_API_KEY or AI_GATEWAY_API_KEY");
   const body = JSON.stringify({ model, state, questions });
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(endpoint, {

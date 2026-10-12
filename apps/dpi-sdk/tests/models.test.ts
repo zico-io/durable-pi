@@ -22,7 +22,7 @@ const usage: WireUsage = {
 const assistant = (content: WireAssistantMessage["content"], extra: Partial<WireAssistantMessage> = {}): WireAssistantMessage => ({
   role: "assistant",
   content,
-  provider: "openrouter",
+  provider: "vercel-ai-gateway",
   model: "m",
   usage,
   stopReason: "stop",
@@ -40,8 +40,8 @@ const snapshot = (entries: WireEntry[], extra: Partial<WireSnapshotEvent> = {}):
   tools: [],
   compactions: [],
   inbox: [],
-  agent: { model: { provider: "openrouter", modelId: "m" } },
-  usage: { models: { "openrouter/m": usage }, tools: {} },
+  agent: { model: { provider: "vercel-ai-gateway", modelId: "m" } },
+  usage: { models: { "vercel-ai-gateway/m": usage }, tools: {} },
   ...extra,
 });
 

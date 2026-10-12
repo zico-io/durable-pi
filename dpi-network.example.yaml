@@ -35,7 +35,7 @@ defaults:
   code_dir: ~/dpi                  # where apps/dpi-backend + apps/dpi-sdk are synced (ssh / exe-dev)
   home_dir: ~/.dpi                 # backend.env, data and logs; deploys never touch it
   start_dirs: ["~/dpi-work"]       # where new sessions start (created if missing); any existing folder works as a cwd
-  env_keys: [OPENROUTER_API_KEY]   # secrets: copied by name from .env, never written here
+  env_keys: [AI_GATEWAY_API_KEY]   # secrets: copied by name from .env, never written here
   # env:                           # plain settings, written as-is
   #   DPI_PROVIDER: faux           # the free deterministic model, for tests
 

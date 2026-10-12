@@ -13,7 +13,7 @@ Needs Node 22.19 or newer (`.nvmrc` pins 24).
 ```bash
 cd apps/dpi-backend && npm install
 npm run token                  # creates ~/.dpi/backend.env with DPI_TOKEN and prints it (npm run token -- --rotate replaces it)
-echo "OPENROUTER_API_KEY=sk-or-..." >> ~/.dpi/backend.env
+echo "AI_GATEWAY_API_KEY=vck_..." >> ~/.dpi/backend.env
 npm start                      # 127.0.0.1:4780; data in ~/.dpi/backend
 ```
 
@@ -30,9 +30,9 @@ With the repo's network config, `just net up local && just backend run` does the
 | `DPI_DATA_DIR` | `$DPI_HOME/backend` | catalog, app state, `sessions/`, `archive/` |
 | `DPI_HOME` | `~/.dpi` | where `backend.env` is read (set by the service unit) |
 | `DPI_ENV_FILE` | `$DPI_HOME/backend.env` | the env file to read |
-| `DPI_PROVIDER` | `openrouter` | `faux` gives a free deterministic model for tests |
-| `OPENROUTER_API_KEY` | | model access, required unless `DPI_PROVIDER=faux`. Without it the device lists no models. Never sent to clients |
-| `TYPESAFE_API_KEY` | | optional: `jev-damage-control` asks Jev with it, else through OpenRouter |
+| `DPI_PROVIDER` | `vercel-ai-gateway` | `faux` gives a free deterministic model for tests |
+| `AI_GATEWAY_API_KEY` | | [Vercel AI Gateway](https://vercel.com/ai-gateway) model access, required unless `DPI_PROVIDER=faux`. Without it the device lists no models. Never sent to clients |
+| `TYPESAFE_API_KEY` | | optional: `jev-damage-control` asks Jev with it, else through Vercel AI Gateway |
 
 Flags `--port`, `--host`, `--name`, `--start-dirs`, `--data-dir` and `--env-file` override the env.
 
@@ -104,7 +104,7 @@ The one-request client needs nothing but curl. The answer comes back in the same
 read U T < <(sqlite3 -separator ' ' ~/.dpi/network.sqlite "select url, token from devices where id='vm-1'")
 H=(-H "Authorization: Bearer $T" -H 'content-type: application/json')
 # cwd "." is the device's first start dir
-curl -s "$U/v1/sessions" "${H[@]}" -d '{"name":"oneshot","cwd":".","model":{"provider":"openrouter","modelId":"anthropic/claude-sonnet-5.5"}}'
+curl -s "$U/v1/sessions" "${H[@]}" -d '{"name":"oneshot","cwd":".","model":{"provider":"vercel-ai-gateway","modelId":"anthropic/claude-sonnet-5.5"}}'
 curl -s "$U/v1/sessions/oneshot/agents/main/messages" "${H[@]}" \
   -d '{"content":"How many files are in this directory? Use bash.","requestId":"oneshot-1","waitMs":120000}'
 # {"submissionId":…,"status":"done","answer":{"entryId":…,"text":"…"}}  (on timeout: 202 "pending" or "queued"; poll /submissions/<id>?waitMs=)
