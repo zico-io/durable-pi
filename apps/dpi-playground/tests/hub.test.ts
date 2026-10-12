@@ -23,13 +23,7 @@ async function bootHub(home: string, networkFile: string, env: Record<string, st
   let output = "";
   const child: ChildProcess = spawn(
     process.execPath,
-    [
-      "--import",
-      "tsx",
-      resolve(import.meta.dirname, "../apps/dpi-playground-hub/src/main.ts"),
-      "--port",
-      String(port),
-    ],
+    ["--import", "tsx", resolve(import.meta.dirname, "../server.ts"), "--port", String(port)],
     {
       env: {
         ...process.env,

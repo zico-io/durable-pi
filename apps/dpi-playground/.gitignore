@@ -1,5 +1,7 @@
 node_modules/
-apps/*/dist/
+.next/
+next-env.d.ts
+*.tsbuildinfo
 .data/
 test-results/
 *.log

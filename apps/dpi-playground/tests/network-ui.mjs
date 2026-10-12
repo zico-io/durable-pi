@@ -87,7 +87,7 @@ writeFileSync(
 );
 mkdirSync(join(tmp, "hub"));
 const hub = run(
-  [resolve(app, "apps/dpi-playground-hub/src/main.ts"), "--port", String(hubPort)],
+  [resolve(app, "server.ts"), "--port", String(hubPort)],
   // box-b starts with a wrong token: device setup happens in the terminal, not in the UI.
   {
     DPI_HOME: join(tmp, "hub"),
