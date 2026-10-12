@@ -23,14 +23,14 @@ Open the repository in Claude Code (or Pi, or your favorite agentic coding tool)
 /install
 ```
 
-The command lives in [`.claude/commands/install.md`](.claude/commands/install.md). It checks Node 24, npm, just and zsh, confirms `OPENROUTER_API_KEY` in `.env` without printing it, runs `just install`, writes this machine's device config with `just net up local`, builds the web UI, offers to set up the proactive demo and finishes with `just check`. It never starts a server and never touches a device other than `local`. Run `/prime` afterwards to load the project context into your agent.
+The command lives in [`.claude/commands/install.md`](.claude/commands/install.md). It checks Node 24, npm, just and zsh, confirms `AI_GATEWAY_API_KEY` in `.env` without printing it, runs `just install`, writes this machine's device config with `just net up local`, builds the web UI, offers to set up the proactive demo and finishes with `just check`. It never starts a server and never touches a device other than `local`. Run `/prime` afterwards to load the project context into your agent.
 
 ### Manual Install
 
-**Prereqs:** [Node.js 24](https://nodejs.org) (via [nvm](https://github.com/nvm-sh/nvm)), [`just`](https://github.com/casey/just), `zsh` (macOS ships it), an [OpenRouter](https://openrouter.ai) API key. Remote devices need passwordless `ssh`, and exe.dev VMs need an [exe.dev](https://exe.dev) account.
+**Prereqs:** [Node.js 24](https://nodejs.org) (via [nvm](https://github.com/nvm-sh/nvm)), [`just`](https://github.com/casey/just), `zsh` (macOS ships it), a [Vercel AI Gateway](https://vercel.com/ai-gateway) API key. Remote devices need passwordless `ssh`, and exe.dev VMs need an [exe.dev](https://exe.dev) account.
 
 ```bash
-cp .env.example .env                           # set OPENROUTER_API_KEY; copied into each device's backend.env, never sent to clients
+cp .env.example .env                           # set AI_GATEWAY_API_KEY; copied into each device's backend.env, never sent to clients
 cp dpi-network.example.yaml dpi-network.yaml   # your devices; starts with only `local`
 just install                                   # npm install for dpi-sdk, dpi-backend, dpi-playground and dpi-tui
 just net up local                              # write ~/.dpi/backend.env with a fresh token and register this machine
@@ -271,7 +271,7 @@ Each device owns its agents and their data in SQLite. The hub only stores how to
 ```text
 durable-pi/
 ├── dpi-network.example.yaml           # template for dpi-network.yaml (gitignored): devices, kinds, start_dirs
-├── .env.example                       # OPENROUTER_API_KEY (+ ELEVENLABS_API_KEY for the demo voice)
+├── .env.example                       # AI_GATEWAY_API_KEY (+ ELEVENLABS_API_KEY for the demo voice)
 ├── justfile                           # install, check, and one module per work area
 ├── just/                              # net, backend, hub, tui, test, proactive (one mod.just each)
 ├── apps/

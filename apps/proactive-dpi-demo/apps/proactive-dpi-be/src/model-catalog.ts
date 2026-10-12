@@ -1,6 +1,6 @@
 // Source: https://agenticengineer.com/model-stack, retrieved 2026-10-05.
-// Active S+, S, A and B models, matched to https://openrouter.ai/api/v1/models.
-// Gemini 4 Argon is rolling out and has no OpenRouter listing at this snapshot.
+// Active S+, S, A and B models, matched to https://ai-gateway.vercel.sh/v1/models.
+// Gemini 4 Argon is rolling out and has no Vercel AI Gateway listing at this snapshot.
 export const curatedModels = [
   {
     id: "anthropic/claude-opus-5.5",
@@ -57,7 +57,7 @@ export const curatedModels = [
     icon: "openai.png",
   },
   {
-    id: "x-ai/grok-4.7",
+    id: "spacexai/grok-4.7",
     name: "Grok 4.7",
     tier: "S",
     icon: "grok.png",
@@ -69,13 +69,13 @@ export const curatedModels = [
     icon: "xiaomi.png",
   },
   {
-    id: "x-ai/grok-4.6",
+    id: "spacexai/grok-4.6",
     name: "Grok 4.6",
     tier: "S",
     icon: "grok.png",
   },
   {
-    id: "z-ai/glm-5.3",
+    id: "zai/glm-5.3",
     name: "GLM-5.3",
     tier: "A",
     icon: "zai.png",
@@ -99,7 +99,7 @@ export const curatedModels = [
     icon: "gemini.png",
   },
   {
-    id: "qwen/qwen3.8-2.4t-a95b",
+    id: "alibaba/qwen3.8-2.4t-a95b",
     name: "Qwen3.8-2.4T-A95B",
     tier: "A",
     icon: "qwen.png",
@@ -147,13 +147,13 @@ export const curatedModels = [
     icon: "deepseek.png",
   },
   {
-    id: "z-ai/glm-5.2",
+    id: "zai/glm-5.2",
     name: "GLM-5.2",
     tier: "A",
     icon: "zai.png",
   },
   {
-    id: "z-ai/glm-5.3-flash",
+    id: "zai/glm-5.3-flash",
     name: "GLM-5.3-Flash",
     tier: "B",
     icon: "zai.png",

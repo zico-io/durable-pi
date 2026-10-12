@@ -4,7 +4,7 @@ import { EventEmitter } from "node:events";
 import { join } from "node:path";
 import { BACKGROUND_CONTEXT as ctx } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
-import { openrouterProvider } from "@earendil-works/pi-ai/providers/openrouter";
+import { vercelAIGatewayProvider } from "@earendil-works/pi-ai/providers/vercel-ai-gateway";
 import {
   Harness,
   configure,
@@ -47,10 +47,10 @@ export class Ops extends EventEmitter {
 
   static async open(store: WatchStore, voice: Voice) {
     const models = createModels();
-    const provider = openrouterProvider();
+    const provider = vercelAIGatewayProvider();
     const catalog = provider.getModels();
     if (!catalog.some((m) => m.id === config.model))
-      throw Error(`OpenRouter has no model ${config.model}`);
+      throw Error(`Vercel AI Gateway has no model ${config.model}`);
     models.setProvider({
       ...provider,
       getModels: () =>
@@ -92,7 +92,7 @@ export class Ops extends EventEmitter {
       );
       const root = await harness.root(ctx, {
         agent: {
-          model: { provider: "openrouter", modelId: config.model },
+          model: { provider: "vercel-ai-gateway", modelId: config.model },
           thinkingLevel: config.thinking,
           extensions: [extensions.OpsTools, extensions.Desk],
           cwd: repoDir,
@@ -140,7 +140,7 @@ export class Ops extends EventEmitter {
       const branch = `incident/${slug}`;
       const conversation = await tx.createConversation({ ownership: { kind: "ownerless" } });
       await configure(tx, conversation.id, {
-        model: { provider: "openrouter", modelId: config.model },
+        model: { provider: "vercel-ai-gateway", modelId: config.model },
         thinkingLevel: config.thinking,
         extensions: [CodingTools, this.extensions.OpsTools, this.extensions.IncidentAgent],
         cwd: worktree,
@@ -247,9 +247,9 @@ Your worktree ${incident.worktree} is checkout-api on branch ${incident.branch},
 
   modelList() {
     return curatedModels.flatMap((c) => {
-      const m = this.models.getModel("openrouter", c.id);
+      const m = this.models.getModel("vercel-ai-gateway", c.id);
       return m
-        ? [{ id: m.id, provider: "openrouter", name: c.name, tier: c.tier, icon: c.icon, contextWindow: m.contextWindow }]
+        ? [{ id: m.id, provider: "vercel-ai-gateway", name: c.name, tier: c.tier, icon: c.icon, contextWindow: m.contextWindow }]
         : [];
     });
   }
@@ -284,7 +284,7 @@ Your worktree ${incident.worktree} is checkout-api on branch ${incident.branch},
         };
       case "configure": {
         const model = body.model as ModelRef | undefined;
-        if (model && (model.provider !== "openrouter" || !this.models.getModel("openrouter", model.modelId)))
+        if (model && (model.provider !== "vercel-ai-gateway" || !this.models.getModel("vercel-ai-gateway", model.modelId)))
           throw Error("Choose a model from the list");
         if (body.thinkingLevel !== undefined && !THINKING.includes(String(body.thinkingLevel)))
           throw Error("Invalid thinking level");
