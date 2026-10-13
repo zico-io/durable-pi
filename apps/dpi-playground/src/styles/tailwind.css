@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@layer theme, base, app, components, utilities;
+@import "tailwindcss";
+@import "./style.css" layer(app);
+@import "./network.css" layer(app);
+@import "./jobs.css" layer(app);
+@import "./extensions.css" layer(app);
+
+@custom-variant dark (&:is(.dark *));
+
+/* Literal values: the app's own --muted, --accent and --secondary mean different things. */
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --color-background: #151010;
+  --color-foreground: #f2eeee;
+  --color-card: #1e1718;
+  --color-card-foreground: #f2eeee;
+  --color-popover: #1e1718;
+  --color-popover-foreground: #f2eeee;
+  --color-primary: #ff8997;
+  --color-primary-foreground: #151010;
+  --color-secondary: #c9a87c;
+  --color-secondary-foreground: #151010;
+  --color-muted: #241b1c;
+  --color-muted-foreground: #c9a87c;
+  --color-accent: #2b2122;
+  --color-accent-foreground: #f2eeee;
+  --color-destructive: #ff5c6c;
+  --color-border: #332829;
+  --color-border-strong: #513d3f;
+  --color-input: #332829;
+  --color-ring: #ff8997;
+}

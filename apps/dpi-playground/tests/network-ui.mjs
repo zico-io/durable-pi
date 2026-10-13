@@ -110,7 +110,9 @@ const pass = (msg) => console.log(`PASS ${msg}`);
 const row = (key) => page.locator(`.tree-row[data-key="${key}"]`);
 const composer = () => page.getByLabel("Message your agent");
 async function send(text, mode = "followUp") {
-  await page.getByLabel("When busy").selectOption(mode);
+  const label = { followUp: "Follow-up", steer: "Steer", reject: "Reject if busy" }[mode];
+  await page.getByRole("button", { name: "When busy" }).click();
+  await page.getByRole("menuitemradio", { name: label }).click();
   await composer().fill(text);
   await page.getByRole("button", { name: "Send message", exact: true }).click();
 }
@@ -178,7 +180,7 @@ try {
   await expect(page.locator(".queue")).toContainText("Queued: queued one");
   await page
     .locator(".queue")
-    .getByRole("button", { name: /Withdraw submission/ })
+    .getByRole("button", { name: /^Remove Queued: queued one/ })
     .click();
   await expect(page.locator(".queue")).toHaveCount(0);
   await send("do not admit", "reject");
@@ -380,7 +382,7 @@ try {
     "aria-selected",
     "true",
   );
-  await expect(composer()).toHaveValue("");
+  await expect(composer()).toHaveText("");
   await composer().fill("/compact");
   await composer().press("Enter");
   await expect(page.locator(".toast")).toContainText("Compaction requested");
@@ -428,7 +430,7 @@ try {
   pass("two tabs on the same agent both stream");
 
   // Keyboard: move through the tree and select with Enter.
-  await page.locator(".tree-list").focus();
+  await page.locator(".tree-row.device > button").first().focus();
   for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   pass("tree keyboard navigation");
@@ -463,7 +465,7 @@ try {
   // Collapse both side panels to their rails, then expand from the rails.
   await page.getByRole("button", { name: "Collapse network" }).click();
   await page.getByRole("button", { name: "Collapse inspector" }).click();
-  await expect(page.locator(".network-sidebar.collapsed .rail-device")).toHaveCount(2);
+  await expect(page.locator(".network-sidebar.collapsed .tree-row.device")).toHaveCount(2);
   await page.getByRole("button", { name: "Open Tasks" }).click();
   await expect(page.getByRole("tab", { name: "Tasks", exact: true })).toHaveAttribute(
     "aria-selected",
