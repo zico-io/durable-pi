@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { NetworkDevice } from "@sdk/api";
 import DirBrowser from "./DirBrowser";
-import Backdrop from "./Backdrop";
 import { deviceClient, message } from "../client/hub";
 import { network, notify, select } from "../client/store";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { ErrorText } from "@/components/ui/text";
 
 const key = (m: { provider: string; id: string }) => `${m.provider}/${m.id}`;
 
@@ -16,10 +26,14 @@ function defaultModel(d?: NetworkDevice) {
 
 export default function NewSessionDialog({
   deviceId: initial,
+  open,
   onClose,
+  onExited,
 }: {
   deviceId?: string;
+  open: boolean;
   onClose: () => void;
+  onExited: () => void;
 }) {
   const devices = useAtomValue(network.devices).filter((d) => d.status === "online");
   const [deviceId, setDeviceId] = useState(
@@ -65,88 +79,81 @@ export default function NewSessionDialog({
   }
 
   return (
-    <Backdrop onClose={onClose}>
-      <form className="modal session-modal" onSubmit={create}>
-        <header>
-          <div>
-            <span className="eyebrow">A PERSISTENT WORKSPACE</span>
-            <h2>New session</h2>
-          </div>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Close new session"
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
-        </header>
+    <Modal open={open} onClose={onClose} onExited={onExited} className="max-w-xl">
+      <form className="grid gap-5" onSubmit={create}>
+        <ModalHeader
+          eyebrow="A persistent workspace"
+          title="New session"
+          closeLabel="Close new session"
+          onClose={onClose}
+        />
         {!devices.length ? (
-          <p className="message-error">
+          <ErrorText>
             No device is online. Start one with just backend run or just net up &lt;id&gt;, then try
             again.
-          </p>
+          </ErrorText>
         ) : (
           <>
-            <label>
-              Device
-              <select
-                value={deviceId}
-                aria-label="Device"
-                onChange={(e) => chooseDevice(e.target.value)}
-              >
-                {devices.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.id} · {d.info?.hostname ?? d.url}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Session name
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-                placeholder="My durable agent"
-                maxLength={100}
-              />
-            </label>
-            <div className="field">
-              <span>Working directory on {deviceId}</span>
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Device</span>
+              <Select value={deviceId} onValueChange={chooseDevice}>
+                <SelectTrigger aria-label="Device" className="h-11 rounded-full px-4">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {`${d.id} · ${d.info?.hostname ?? d.url}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Input
+              label="Session name"
+              value={name}
+              onChange={setName}
+              autoFocus
+              placeholder="My durable agent"
+              maxLength={100}
+              classNames={{ label: "px-0", input: "text-sm" }}
+            />
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Working directory on {deviceId}</span>
               <DirBrowser deviceId={deviceId} cwd={cwd} onCwd={setCwd} />
             </div>
-            <label>
-              Model
-              <select
-                value={model}
-                aria-label="New session model"
-                onChange={(e) => setModel(e.target.value)}
-              >
-                {models.map((m) => (
-                  <option key={key(m)} value={key(m)}>
-                    {m.tier} / {m.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">Model</span>
+              <Select value={model} onValueChange={setModel}>
+                <SelectTrigger aria-label="New session model" className="h-11 rounded-full px-4">
+                  <SelectValue placeholder="Choose a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((m) => (
+                    <SelectItem key={key(m)} value={key(m)}>
+                      {`${m.tier} / ${m.name}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </>
         )}
-        {error && (
-          <p className="message-error" role="alert">
-            {error}
-          </p>
-        )}
-        <footer>
-          <button type="button" className="secondary" onClick={onClose}>
+        {error && <ErrorText role="alert">{error}</ErrorText>}
+        <ModalFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button className="primary" disabled={pending || !model || !cwd || !device}>
-            <Plus size={18} />
+          </Button>
+          <Button
+            type="submit"
+            className="font-semibold"
+            disabled={pending || !model || !cwd || !device}
+          >
+            <Plus className="size-4" />
             {pending ? "Creating…" : "Create session"}
-          </button>
-        </footer>
+          </Button>
+        </ModalFooter>
       </form>
-    </Backdrop>
+    </Modal>
   );
 }

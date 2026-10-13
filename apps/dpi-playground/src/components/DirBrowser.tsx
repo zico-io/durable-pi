@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { CornerLeftUp, Folder, FolderOpen, Home } from "lucide-react";
 import type { DirListing } from "@sdk/api";
 import { deviceClient, message } from "../client/hub";
+import { Button } from "@/components/motion/button";
+import { Input } from "@/components/motion/input";
+import { ErrorText } from "@/components/ui/text";
 
 export default function DirBrowser({
   deviceId,
@@ -48,11 +51,11 @@ export default function DirBrowser({
   }, [deviceId]);
 
   return (
-    <div className="dir-browser">
-      <div className="dir-path">
-        <input
+    <div className="grid gap-2">
+      <div className="flex gap-2">
+        <Input
           value={cwd}
-          onChange={(e) => onCwd(e.target.value)}
+          onChange={onCwd}
           aria-label="Working directory"
           required
           placeholder="/path/to/project"
@@ -63,58 +66,74 @@ export default function DirBrowser({
             e.preventDefault();
             void open(cwd);
           }}
+          className="min-w-0 flex-1"
+          classNames={{ input: "font-mono text-[13px]" }}
         />
-        <button
+        <Button
           type="button"
-          className="secondary small"
+          variant="secondary"
+          className="h-11 px-4"
           disabled={loading || !cwd}
           onClick={() => open(cwd)}
         >
           Go
-        </button>
+        </Button>
       </div>
-      <div className="dir-list" role="listbox" aria-label="Directories" aria-busy={loading}>
+      <div
+        className="grid max-h-48 gap-0.5 overflow-y-auto rounded-xl border border-border bg-background p-1.5"
+        role="listbox"
+        aria-label="Directories"
+        aria-busy={loading}
+      >
         <button
           type="button"
-          className="dir-item"
+          className={
+            "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-primary/10 aria-selected:text-primary"
+          }
           title="Start directories"
           onClick={() => open("")}
         >
-          <Home size={16} />
-          <span>Start dirs</span>
+          <Home className="size-4 text-muted-foreground" />
+          <span className="truncate">Start dirs</span>
         </button>
         {listing?.parent && (
           <button
             type="button"
-            className="dir-item"
+            className={
+              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-primary/10 aria-selected:text-primary"
+            }
             title={listing.parent}
             onClick={() => open(listing.parent!)}
           >
-            <CornerLeftUp size={16} />
-            <span>..</span>
+            <CornerLeftUp className="size-4 text-muted-foreground" />
+            <span className="truncate">..</span>
           </button>
         )}
         {listing?.dirs.map((d) => (
           <button
             key={d.path}
             type="button"
-            className="dir-item"
+            className={
+              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-primary/10 aria-selected:text-primary"
+            }
             role="option"
             aria-selected={d.path === cwd}
             title={d.path}
             onClick={() => open(d.path)}
           >
-            {d.path === cwd ? <FolderOpen size={16} /> : <Folder size={16} />}
-            <span>{d.name}</span>
+            {d.path === cwd ? (
+              <FolderOpen className="size-4" />
+            ) : (
+              <Folder className="size-4 text-muted-foreground" />
+            )}
+            <span className="truncate">{d.name}</span>
           </button>
         ))}
-        {listing && !listing.dirs.length && <p className="hint">No subdirectories.</p>}
+        {listing && !listing.dirs.length && (
+          <p className="px-2.5 py-1.5 text-sm text-muted-foreground">No subdirectories.</p>
+        )}
       </div>
-      {error && (
-        <p className="message-error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText role="alert">{error}</ErrorText>}
     </div>
   );
 }

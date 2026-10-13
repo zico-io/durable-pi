@@ -1,10 +1,9 @@
 // The selected agent's context window: how full it is, where automatic compaction starts in the background, and
 // where the next request waits for a summary. Both markers drag (or take arrow keys) and save the session's
 // thresholds, which pi-durable reads at its next request.
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
-import { Info, X } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   compactionThresholds,
   defaultCompaction,
@@ -22,9 +21,12 @@ import {
   sessionSummaryAtom,
 } from "../client/store";
 import { store } from "../client/state";
-import { cx } from "../client/cx";
 import { useBound } from "../client/useBound";
-import Backdrop from "./Backdrop";
+import { Button } from "@/components/motion/button";
+import { Checkbox } from "@/components/motion/checkbox";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { Hint, SectionLabel } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 const STEP = 512;
 const MIN_AUTO = 4096;
@@ -150,75 +152,107 @@ export default function ContextBar() {
     );
   }
 
+  const markerClass = (which: Marker, n: number) =>
+    cn(
+      "context-marker group/marker absolute top-[-9px] -ml-0.5 h-[26px] w-1 cursor-ew-resize touch-none rounded-full p-0 outline-none",
+      "before:absolute before:-inset-x-2.5 before:-inset-y-1 before:content-['']",
+      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-topbar",
+      which === "auto" ? "auto bg-warning" : "wait bg-foreground",
+      `label-${align(n)}`,
+      !settings.enabled && "opacity-45",
+    );
+  const labelClass = (which: Marker, n: number) =>
+    cn(
+      "context-marker-label pointer-events-none absolute font-mono text-xs whitespace-nowrap",
+      which === "auto"
+        ? "bottom-[calc(100%+6px)] text-warning"
+        : "top-[calc(100%+6px)] text-foreground",
+      align(n) === "start"
+        ? "left-[-2px]"
+        : align(n) === "end"
+          ? "right-[-2px]"
+          : "left-1/2 -translate-x-1/2",
+    );
+
   return (
     <>
-      <section className="context-section" aria-labelledby="context-title">
-        <div className="section-label">
-          <span id="context-title">CONTEXT</span>
+      <section className="context-section grid gap-2.5" aria-labelledby="context-title">
+        <SectionLabel>
+          <span id="context-title">Context</span>
           {contextWindow > 0 && (
             <button
-              className="context-details-toggle"
+              type="button"
+              className="context-details-toggle -mr-1 inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-xs font-medium tracking-normal text-primary normal-case outline-none hover:underline hover:underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => openDialog({ kind: "compaction" })}
             >
-              <Info size={16} />
+              <Info className="size-3.5" />
               Details
             </button>
           )}
-        </div>
+        </SectionLabel>
         {!contextWindow ? (
-          <div className="hint">Pick a model to see its context window.</div>
+          <Hint>Pick a model to see its context window.</Hint>
         ) : (
           <>
-            <div className="context-numbers">
-              <strong>{k(used)}</strong>
-              <span>of {k(contextWindow)} tokens</span>
-              <span className="context-pct">{fullness}%</span>
+            <div className="context-numbers flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <strong className="font-heading text-xl font-semibold tabular-nums">{k(used)}</strong>
+              <span className="text-sm text-muted-foreground">of {k(contextWindow)} tokens</span>
+              <span className="context-pct font-mono text-xs text-muted-foreground">
+                {fullness}%
+              </span>
               {compacting && (
-                <span className="context-compacting">
-                  <i />
+                <span className="context-compacting ml-auto inline-flex items-center gap-1.5 self-center text-xs font-medium text-warning">
+                  <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-current" />
                   Compacting
                 </span>
               )}
             </div>
             <div
               ref={bar}
-              className={cx("context-bar", !settings.enabled && "off")}
+              className={cn(
+                "context-bar relative mx-1 mt-8 mb-9 h-2.5 touch-none rounded-full border border-border-strong bg-muted",
+                !settings.enabled && "off",
+              )}
               onPointerMove={drag}
               onPointerUp={up}
               onPointerCancel={up}
             >
               <div
-                className={cx(
-                  "context-fill",
-                  marks.auto !== undefined && used >= marks.auto && "hot",
+                className={cn(
+                  "context-fill absolute inset-y-0 left-0 rounded-l-full bg-linear-to-r from-primary/30 transition-[width] duration-300 motion-reduce:transition-none",
+                  marks.auto !== undefined && used >= marks.auto ? "hot to-warning" : "to-primary",
                 )}
                 style={{ width: pct(used) }}
               />
               <div
-                className="context-reserve"
+                className="context-reserve absolute inset-y-0 right-0 rounded-r-full border-l border-muted-foreground/50 bg-[repeating-linear-gradient(135deg,rgb(255_255_255/0.08)_0_4px,transparent_4px_8px)]"
                 style={{ left: pct(marks.wait) }}
                 title="Reserved for the answer"
               />
               {marks.auto !== undefined && (
                 <button
-                  className={`context-marker auto label-${align(marks.auto)}`}
+                  type="button"
+                  className={markerClass("auto", marks.auto)}
                   role="slider"
                   aria-label="Automatic compaction starts at"
                   aria-valuemin={MIN_AUTO}
                   aria-valuemax={marks.wait - GAP}
                   aria-valuenow={marks.auto}
                   aria-valuetext={`${k(marks.auto)} tokens`}
-                  style={{ left: pct(marks.auto) } as CSSProperties}
+                  style={{ left: pct(marks.auto) }}
                   onPointerDown={(e) => down("auto", e)}
                   onKeyDown={(e) => key("auto", e)}
                   onKeyUp={commit}
                   onBlur={commit}
                 >
-                  <span className="context-marker-label">Auto-compact at {k(marks.auto)}</span>
+                  <span className={labelClass("auto", marks.auto)}>
+                    Auto-compact at {k(marks.auto)}
+                  </span>
                 </button>
               )}
               <button
-                className={`context-marker wait label-${align(marks.wait)}`}
+                type="button"
+                className={markerClass("wait", marks.wait)}
                 role="slider"
                 aria-label="The next request waits for a summary at"
                 aria-valuemin={(marks.auto ?? MIN_AUTO) + GAP}
@@ -231,10 +265,10 @@ export default function ContextBar() {
                 onKeyUp={commit}
                 onBlur={commit}
               >
-                <span className="context-marker-label">Reserve at {k(marks.wait)}</span>
+                <span className={labelClass("wait", marks.wait)}>Reserve at {k(marks.wait)}</span>
               </button>
             </div>
-            <p className="hint context-hint">
+            <Hint className="context-hint [&_strong]:font-semibold [&_strong]:text-foreground">
               {settings.enabled ? (
                 <>
                   Compacts in the background at <strong>{k(marks.auto ?? marks.wait)}</strong> and
@@ -243,61 +277,46 @@ export default function ContextBar() {
               ) : (
                 "Automatic compaction is off."
               )}
-            </p>
+            </Hint>
           </>
         )}
       </section>
-      {detailsOpen &&
-        createPortal(
-          <Backdrop onClose={closeDialog}>
-            <section
-              className="modal compaction-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="compaction-title"
-            >
-              <header>
-                <h2 id="compaction-title">Context compaction</h2>
-                <button
-                  className="icon-button"
-                  aria-label="Close context compaction"
-                  onClick={closeDialog}
-                >
-                  <X size={18} />
-                </button>
-              </header>
-              <p>
-                A summary starts in the background at <strong>{k(marks.auto ?? marks.wait)}</strong>
-                . Above <strong>{k(marks.wait)}</strong> the next request waits for it, keeping{" "}
-                {k(contextWindow - marks.wait)} free for the answer. Drag a marker on the bar to
-                change either point.
-              </p>
-              <p>
-                Older entries stay stored, and <code>search_history</code> still finds them.
-              </p>
-              <label className="context-toggle">
-                <input
-                  type="checkbox"
-                  checked={enabled}
-                  onChange={(e) => {
-                    setEnabled(e.target.checked);
-                    void save({ enabled: e.target.checked });
-                  }}
-                />
-                Automatic compaction
-              </label>
-              <p className="hint">
-                Applies to every agent in this session. <code>/compact</code> works either way.
-              </p>
-              <footer>
-                <button className="secondary" onClick={closeDialog}>
-                  Close
-                </button>
-              </footer>
-            </section>
-          </Backdrop>,
-          document.body,
-        )}
+      <Modal open={detailsOpen} onClose={closeDialog} className="compaction-modal">
+        <ModalHeader
+          title="Context compaction"
+          closeLabel="Close context compaction"
+          onClose={closeDialog}
+        />
+        <div className="grid gap-3 text-sm leading-6 [&_code]:rounded [&_code]:bg-accent [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[13px] [&_strong]:font-semibold">
+          <p>
+            A summary starts in the background at <strong>{k(marks.auto ?? marks.wait)}</strong>.
+            Above <strong>{k(marks.wait)}</strong> the next request waits for it, keeping{" "}
+            {k(contextWindow - marks.wait)} free for the answer. Drag a marker on the bar to change
+            either point.
+          </p>
+          <p>
+            Older entries stay stored, and <code>search_history</code> still finds them.
+          </p>
+        </div>
+        <div className="context-toggle grid gap-2 rounded-xl border border-border bg-background/60 p-4">
+          <Checkbox
+            label="Automatic compaction"
+            checked={enabled}
+            onCheckedChange={(checked) => {
+              setEnabled(checked);
+              void save({ enabled: checked });
+            }}
+          />
+          <Hint className="pl-8 [&_code]:rounded [&_code]:bg-accent [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[13px] [&_code]:text-foreground">
+            Applies to every agent in this session. <code>/compact</code> works either way.
+          </Hint>
+        </div>
+        <ModalFooter>
+          <Button variant="secondary" onClick={closeDialog}>
+            Close
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 }

@@ -33,7 +33,7 @@ import {
   toggle,
 } from "../client/store";
 import { store } from "../client/state";
-import { cx } from "../client/cx";
+import { cn } from "@/lib/utils";
 
 interface Row {
   node: TreeNode;
@@ -214,12 +214,12 @@ export default function NetworkSidebar() {
       <AnimatedSidebar
         ariaLabel="Network"
         collapsible="icon"
-        className={cx("network-sidebar h-full", !layout.tree && "collapsed", drawer && "open")}
+        className={cn("network-sidebar h-full", !layout.tree && "collapsed", drawer && "open")}
         panelClassName="static h-full bg-[#181213]"
       >
         <AnimatedSidebarHeader className="flex-row items-center gap-2 px-2.5 pt-2.5 pb-1">
           <span
-            className={cx(
+            className={cn(
               "flex min-w-0 flex-1 items-center gap-2 px-1.5 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground",
               ctx.collapsed && "hidden",
             )}
@@ -244,11 +244,11 @@ export default function NetworkSidebar() {
         </AnimatedSidebarHeader>
 
         <AnimatedSidebarContent
-          className={cx("tree-list", ctx.collapsed ? "px-0" : "px-1.5")}
+          className={cn("tree-list", ctx.collapsed ? "px-0" : "px-1.5")}
           onKeyDown={keydown}
         >
           {searchItems.length > 0 && (
-            <AnimatedSidebarGroup className={cx("pb-1", ctx.collapsed && "px-0")}>
+            <AnimatedSidebarGroup className={cn("pb-1", ctx.collapsed && "px-0")}>
               <AnimatedSidebarMenu>
                 <AnimatedSidebarMenuItem>
                   <MorphingSearch
@@ -263,7 +263,7 @@ export default function NetworkSidebar() {
               </AnimatedSidebarMenu>
             </AnimatedSidebarGroup>
           )}
-          <AnimatedSidebarGroup className={cx(ctx.collapsed && "px-0")}>
+          <AnimatedSidebarGroup className={cn(ctx.collapsed && "px-0")}>
             <AnimatedSidebarGroupLabel>Devices</AnimatedSidebarGroupLabel>
             <AnimatedSidebarGroupContent>
               <AnimatedSidebarMenu aria-label="Devices, sessions and agents">

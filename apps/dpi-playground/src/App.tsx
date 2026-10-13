@@ -1,8 +1,7 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Provider, useAtom, useAtomValue } from "jotai";
 import {
   Activity,
-  Check,
   CircleHelp,
   Database,
   GitFork,
@@ -11,7 +10,6 @@ import {
   PanelLeft,
   PanelRight,
   Plus,
-  X,
 } from "lucide-react";
 import NetworkSidebar from "./components/NetworkSidebar";
 import AgentView from "./components/AgentView";
@@ -20,7 +18,6 @@ import OfflinePanel from "./components/OfflinePanel";
 import NewSessionDialog from "./components/NewSessionDialog";
 import PromptDialog from "./components/PromptDialog";
 import ModelPicker from "./components/ModelPicker";
-import Backdrop from "./components/Backdrop";
 import {
   attempt,
   boot,
@@ -49,9 +46,15 @@ import {
   toggleInspector,
   toggleTree,
   treeWidthAtom,
+  type Dialog,
 } from "./client/store";
 import { store } from "./client/state";
-import { cx } from "./client/cx";
+import { Button } from "@/components/motion/button";
+import { Alert, AlertClose, AlertContent, AlertIcon } from "@/components/motion/alert";
+import { AnimatedToastStack } from "@/components/motion/animated-toast-stack";
+import { Modal, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { Eyebrow } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 export default function App() {
   return (
@@ -69,6 +72,8 @@ function keydown(e: KeyboardEvent) {
   }
   if (e.key !== "Escape") return;
   if (store.get(dialogAtom)) return closeDialog();
+  // An open menu or picker takes its own Escape.
+  if ((e.target as Element | null)?.closest?.('[aria-expanded="true"]')) return;
   if (!e.repeat && !e.isComposing && store.get(busyAtom)) {
     e.preventDefault();
     void interrupt();
@@ -100,12 +105,11 @@ function Shell() {
   const streamState = useAtomValue(streamStateAtom);
   const treeWidth = useAtomValue(treeWidthAtom);
   const layout = useAtomValue(layoutAtom);
-  const dialog = useAtomValue(dialogAtom);
-  const [error, setError] = useAtom(errorAtom);
   const [drawer, setDrawer] = useAtom(drawerAtom);
   const inspectorOverlay = useAtomValue(inspectorOverlayAtom);
   const [creatingAgent, setCreatingAgent] = useState(false);
   const onlineCount = devices.filter((d) => d.status === "online").length;
+  const live = streamState === "live";
 
   useEffect(() => {
     document.addEventListener("keydown", keydown);
@@ -132,78 +136,85 @@ function Shell() {
   const openNewSession = () => openDialog({ kind: "new-session", deviceId: selected?.deviceId });
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <button
-            className="icon-button tree-toggle"
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <header className="z-10 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-topbar pr-4 pl-3 max-[760px]:h-14 max-[760px]:px-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Button
+            variant="ghost"
+            size="icon"
             aria-label="Toggle network"
             title="Network"
+            className="min-[768px]:hidden"
             onClick={() => setDrawer(!drawer)}
           >
-            <PanelLeft size={19} />
-          </button>
-          <img className="brandmark" src="/icons/durable-pi.svg" alt="Durable Pi" />
-          <strong>Durable Pi</strong>
+            <PanelLeft className="size-[18px]" />
+          </Button>
+          <img className="ml-1 h-6 w-11 shrink-0" src="/icons/durable-pi.svg" alt="Durable Pi" />
+          <strong className="font-heading text-base font-bold tracking-tight whitespace-nowrap">
+            Durable Pi
+          </strong>
           <span
-            className="network-summary"
+            className="network-summary ml-1 inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[13px] whitespace-nowrap text-muted-foreground max-[760px]:hidden"
             title={`${onlineCount} of ${devices.length} devices online`}
           >
-            <Network size={16} />
+            <Network className="size-3.5" />
             {onlineCount} of {devices.length} online
           </span>
         </div>
-        <div className="top-actions">
-          <span className="connection">
-            <i className={cx(streamState === "live" && "online")} />
-            {streamState === "live" ? "Connected" : "Reconnecting"}
+        <div className="flex items-center gap-2">
+          <span
+            className="mr-1 inline-flex items-center gap-2 text-[13px] text-muted-foreground max-[760px]:hidden"
+            role="status"
+          >
+            <i className={cn("dot", live ? "on" : "chk")} />
+            {live ? "Connected" : "Reconnecting"}
           </span>
-          <button
-            className="icon-button"
+          <Button
+            variant="ghost"
+            size="icon"
             title="How this works"
             aria-label="How this works"
             onClick={() => openDialog({ kind: "help" })}
           >
-            <CircleHelp size={19} />
-          </button>
-          <button
-            className="secondary small new-agent-button"
+            <CircleHelp className="size-[18px]" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-9 px-3.5 text-sm max-[760px]:hidden"
             disabled={!selected || !online || creatingAgent}
             title="Start a fresh agent in this session"
             onClick={newAgent}
           >
-            <Plus size={18} />
+            <Plus className="size-4" />
             New agent
-          </button>
-          <button className="primary small" onClick={openNewSession}>
-            <Plus size={18} />
+          </Button>
+          <Button size="sm" className="h-9 px-3.5 text-sm font-semibold" onClick={openNewSession}>
+            <Plus className="size-4" />
             New session
-          </button>
-          <button
-            className="icon-button inspector-toggle"
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             aria-label="Toggle inspector"
             title="Inspector"
+            className="min-[1101px]:hidden"
             disabled={!selected || !online}
             onClick={() => (inspectorOverlay ? hideInspector() : showInspector())}
           >
-            <PanelRight size={19} />
-          </button>
+            <PanelRight className="size-[18px]" />
+          </Button>
         </div>
       </header>
-      {error && (
-        <div className="error-banner" role="alert">
-          <Info size={18} />
-          <span>{error}</span>
-          <button className="icon-button" aria-label="Dismiss error" onClick={() => setError("")}>
-            ×
-          </button>
-        </div>
-      )}
-      <main className="net-workspace" style={{ "--tree-w": `${treeWidth}px` } as CSSProperties}>
+      <ErrorBanner />
+      <main
+        className="relative flex min-h-0 flex-1"
+        style={{ "--tree-w": `${treeWidth}px` } as CSSProperties}
+      >
         <NetworkSidebar />
         {layout.tree && (
           <div
-            className="tree-resizer"
+            className="relative z-[5] -mx-[3px] w-1.5 shrink-0 cursor-col-resize transition-colors hover:bg-primary/20 max-[767px]:hidden"
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize network tree"
@@ -213,81 +224,142 @@ function Shell() {
         {selected && device && online ? (
           <>
             <Inspector />
-            {inspectorOverlay && <div className="inspector-backdrop" onClick={hideInspector} />}
+            {inspectorOverlay && (
+              <div
+                className="absolute inset-0 z-[29] bg-black/60 min-[1101px]:hidden"
+                onClick={hideInspector}
+              />
+            )}
             <AgentView key={`${selected.deviceId}/${selected.sessionId}`} />
           </>
         ) : selected && device ? (
           <OfflinePanel device={device} />
         ) : (
-          <section className="welcome">
-            <img className="welcome-symbol" src="/icons/durable-pi.svg" alt="Durable Pi" />
-            <span className="eyebrow">THE DURABLE AGENT NETWORK</span>
-            <h1>
-              Close the tab.
-              <br />
-              The work continues.
-            </h1>
-            <p>Agents run on your devices. This page is only a window into them.</p>
-            <button className="primary" disabled={!onlineCount} onClick={openNewSession}>
-              <Plus size={18} />
-              {devices.length ? "Create a session" : "Add a device to dpi-network.yaml"}
-            </button>
-            <div className="welcome-features">
-              <span>
-                <Database size={18} />
-                SQLite on each device
-              </span>
-              <span>
-                <GitFork size={18} />
-                Branch any agent
-              </span>
-              <span>
-                <Activity size={18} />
-                Watch from anywhere
-              </span>
-            </div>
-          </section>
+          <Welcome
+            onlineCount={onlineCount}
+            deviceCount={devices.length}
+            onCreate={openNewSession}
+          />
         )}
       </main>
-
-      {dialog?.kind === "new-session" ? (
-        <NewSessionDialog deviceId={dialog.deviceId} onClose={closeDialog} />
-      ) : dialog?.kind === "prompt" ? (
-        <PromptDialog dialog={dialog} onClose={closeDialog} />
-      ) : dialog?.kind === "models" ? (
-        <ModelPicker onClose={closeDialog} />
-      ) : dialog?.kind === "path" ? (
-        <Backdrop onClose={closeDialog}>
-          <section
-            className="modal path-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="path-title"
-          >
-            <header>
-              <h2 id="path-title">Working directory</h2>
-              <button
-                className="icon-button"
-                aria-label="Close working directory"
-                onClick={closeDialog}
-              >
-                <X size={18} />
-              </button>
-            </header>
-            <code className="full-directory">{dialog.path}</code>
-            <footer>
-              <button className="secondary" onClick={closeDialog}>
-                Close
-              </button>
-            </footer>
-          </section>
-        </Backdrop>
-      ) : dialog?.kind === "help" ? (
-        <HelpDialog />
-      ) : null}
+      <Dialogs />
       <Toast />
     </div>
   );
+}
+
+function ErrorBanner() {
+  const [error, setError] = useAtom(errorAtom);
+  // Keep the text while the banner animates out.
+  const last = useRef(error);
+  if (error) last.current = error;
+  return (
+    <div className={cn("px-4", error && "pt-3")}>
+      <Alert
+        variant="destructive"
+        open={!!error}
+        onOpenChange={(open) => !open && setError("")}
+        className="error-banner border border-destructive/30 py-3"
+      >
+        <AlertIcon />
+        <AlertContent className="text-foreground">{last.current}</AlertContent>
+        <AlertClose aria-label="Dismiss error" />
+      </Alert>
+    </div>
+  );
+}
+
+function Welcome({
+  onlineCount,
+  deviceCount,
+  onCreate,
+}: {
+  onlineCount: number;
+  deviceCount: number;
+  onCreate: () => void;
+}) {
+  return (
+    <section className="flex min-w-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
+      <img className="mb-7 h-14 w-24" src="/icons/durable-pi.svg" alt="Durable Pi" />
+      <Eyebrow>The durable agent network</Eyebrow>
+      <h1 className="mt-4 font-heading text-4xl leading-[1.15] font-bold tracking-tight text-balance max-[760px]:text-3xl">
+        Close the tab.
+        <br />
+        The work continues.
+      </h1>
+      <p className="mt-4 max-w-md text-base text-muted-foreground">
+        Agents run on your devices. This page is only a window into them.
+      </p>
+      <Button className="mt-8 h-11 px-5 font-semibold" disabled={!onlineCount} onClick={onCreate}>
+        <Plus className="size-4" />
+        {deviceCount ? "Create a session" : "Add a device to dpi-network.yaml"}
+      </Button>
+      <div className="mt-14 flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm text-muted-foreground max-[760px]:flex-col max-[760px]:items-center">
+        {[
+          { icon: Database, text: "SQLite on each device" },
+          { icon: GitFork, text: "Branch any agent" },
+          { icon: Activity, text: "Watch from anywhere" },
+        ].map(({ icon: Icon, text }) => (
+          <span key={text} className="inline-flex items-center gap-2">
+            <Icon className="size-4 text-primary" />
+            {text}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// A dialog stays mounted while its modal animates out; each dialog object gets its own instance.
+const dialogKeys = new WeakMap<Dialog, number>();
+let nextDialogKey = 0;
+const keyOf = (d: Dialog) => {
+  if (!dialogKeys.has(d)) dialogKeys.set(d, nextDialogKey++);
+  return dialogKeys.get(d);
+};
+
+function Dialogs() {
+  const dialog = useAtomValue(dialogAtom);
+  const [shown, setShown] = useState(dialog);
+  if (dialog && dialog !== shown) setShown(dialog);
+  const current = dialog ?? shown;
+  if (!current) return null;
+  const key = keyOf(current);
+  const props = {
+    open: dialog === current,
+    onClose: closeDialog,
+    onExited: () => setShown(undefined),
+  };
+  switch (current.kind) {
+    case "new-session":
+      return <NewSessionDialog key={key} {...props} deviceId={current.deviceId} />;
+    case "prompt":
+      return <PromptDialog key={key} {...props} dialog={current} />;
+    case "models":
+      return <ModelPicker key={key} {...props} />;
+    case "path":
+      return (
+        <Modal open={props.open} onClose={closeDialog} onExited={props.onExited} key={key}>
+          <ModalHeader
+            title="Working directory"
+            closeLabel="Close working directory"
+            onClose={closeDialog}
+          />
+          <code className="block rounded-xl border border-border bg-background px-3.5 py-3 font-mono text-[13px] leading-6 break-all">
+            {current.path}
+          </code>
+          <ModalFooter>
+            <Button variant="secondary" onClick={closeDialog}>
+              Close
+            </Button>
+          </ModalFooter>
+        </Modal>
+      );
+    case "help":
+      return <HelpDialog key={key} open={props.open} onExited={props.onExited} />;
+    default:
+      return null;
+  }
 }
 
 const LESSONS = [
@@ -317,67 +389,50 @@ const LESSONS = [
   ],
 ];
 
-function HelpDialog() {
+function HelpDialog({ open, onExited }: { open: boolean; onExited: () => void }) {
   return (
-    <Backdrop onClose={closeDialog}>
-      <section className="modal help-modal">
-        <header>
-          <div>
-            <span className="eyebrow">LEARN BY DOING</span>
-            <h2>What makes this durable?</h2>
-          </div>
-          <button className="icon-button" aria-label="Close help" onClick={closeDialog}>
-            <X size={18} />
-          </button>
-        </header>
-        <ol className="learning-list">
-          {LESSONS.map(([title, text], i) => (
-            <li key={title}>
-              <span>{String(i + 1).padStart(2, "0")}</span>
-              <div>
-                <strong>{title}</strong>
-                <p>{text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <div className="callout">
-          <Info size={18} />
-          <span>
-            Durable does not mean exactly-once external effects. Checkpoints protect progress. Tools
-            still need their own idempotency.
-          </span>
-        </div>
-      </section>
-    </Backdrop>
+    <Modal open={open} onClose={closeDialog} onExited={onExited} className="max-w-xl">
+      <ModalHeader
+        eyebrow="Learn by doing"
+        title="What makes this durable?"
+        closeLabel="Close help"
+        onClose={closeDialog}
+      />
+      <ol className="grid gap-4">
+        {LESSONS.map(([title, text], i) => (
+          <li key={title} className="flex gap-4">
+            <span className="mt-0.5 font-mono text-xs text-primary">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div className="grid gap-1">
+              <strong className="text-sm font-semibold">{title}</strong>
+              <p className="text-sm leading-6 text-muted-foreground">{text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="flex gap-3 rounded-xl border border-border bg-background p-4 text-sm leading-6">
+        <Info className="mt-1 size-4 text-primary" />
+        <span>
+          Durable does not mean exactly-once external effects. Checkpoints protect progress. Tools
+          still need their own idempotency.
+        </span>
+      </div>
+    </Modal>
   );
 }
 
-/** The toast fades in and out (the .toast-enter-* classes) and keeps its text while fading out. */
+/** One notice at a time: a new one replaces the text in place. */
 function Toast() {
-  const text = useAtomValue(toastAtom);
-  const [shown, setShown] = useState("");
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (text) {
-      setShown(text);
-      let frame = requestAnimationFrame(
-        () => (frame = requestAnimationFrame(() => setVisible(true))),
-      );
-      return () => cancelAnimationFrame(frame);
-    }
-    setVisible(false);
-    const timer = setTimeout(() => setShown(""), 200);
-    return () => clearTimeout(timer);
-  }, [text]);
-  if (!shown) return null;
+  const [text, setText] = useAtom(toastAtom);
   return (
-    <div
-      className={cx("toast", "toast-enter-active", !visible && "toast-enter-from")}
-      role="status"
-    >
-      <Check size={18} />
-      {shown}
-    </div>
+    <AnimatedToastStack
+      fixed
+      position="bottom-center"
+      className="toast w-auto max-w-[min(32rem,calc(100vw-2rem))]"
+      classNames={{ title: "whitespace-normal" }}
+      toasts={text ? [{ id: "notice", title: text, status: "success" }] : []}
+      onDismiss={() => setText("")}
+    />
   );
 }

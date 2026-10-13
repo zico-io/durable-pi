@@ -1,16 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&family=IBM+Plex+Mono:wght@400;500&display=swap");
-@layer theme, base, app, components, utilities;
 @import "tailwindcss";
-@import "./style.css" layer(app);
-@import "./network.css" layer(app);
-@import "./jobs.css" layer(app);
-@import "./extensions.css" layer(app);
 
 @custom-variant dark (&:is(.dark *));
 
-/* Literal values: the app's own --muted, --accent and --secondary mean different things. */
+/* Literal values: one warm dark palette, shared by beUI blocks and the app. */
 @theme {
   --font-sans: "DM Sans", sans-serif;
+  --font-heading: "Manrope", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -31,8 +27,108 @@
   --color-accent: #2b2122;
   --color-accent-foreground: #f2eeee;
   --color-destructive: #ff5c6c;
+  --color-success: #6fcf97;
+  --color-warning: #f2c94c;
   --color-border: #332829;
   --color-border-strong: #513d3f;
   --color-input: #332829;
   --color-ring: #ff8997;
+  --color-topbar: #1a1415;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    font-synthesis: none;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary {
+    list-style: none;
+  }
+  ::placeholder {
+    @apply text-muted-foreground;
+  }
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+/* Agent replies arrive as rendered Markdown, so their elements cannot carry utility classes. */
+@layer components {
+  .markdown {
+    @apply text-[15px] leading-7 [overflow-wrap:anywhere];
+  }
+  .markdown > * + * {
+    @apply mt-3;
+  }
+  .markdown :is(h1, h2, h3, h4) {
+    @apply mt-5 font-heading text-base font-semibold;
+  }
+  .markdown :is(ul, ol) {
+    @apply pl-6;
+  }
+  .markdown ul {
+    @apply list-disc;
+  }
+  .markdown ol {
+    @apply list-decimal;
+  }
+  .markdown li + li {
+    @apply mt-1.5;
+  }
+  .markdown strong {
+    @apply font-semibold;
+  }
+  .markdown a {
+    @apply text-primary underline underline-offset-4;
+  }
+  .markdown :not(pre) > code {
+    @apply rounded-md bg-accent px-1.5 py-0.5 font-mono text-[0.9em];
+  }
+  .markdown pre {
+    @apply overflow-x-auto rounded-xl border border-border bg-card p-4 font-mono text-sm leading-6;
+  }
+  .markdown table {
+    @apply w-full border-collapse text-sm;
+  }
+  .markdown :is(td, th) {
+    @apply border border-border px-3 py-2 text-left;
+  }
+
+  /* Status dots: the tree, the topbar and the session panel share them. */
+  .dot {
+    @apply inline-block size-2 shrink-0 rounded-full bg-muted-foreground/40;
+  }
+  .dot.on {
+    @apply bg-success shadow-[0_0_6px_--theme(--color-success/40%)];
+  }
+  .dot.chk {
+    @apply animate-pulse bg-muted-foreground;
+  }
+  .dot.err {
+    @apply bg-destructive;
+  }
+  .dot.off {
+    @apply bg-muted-foreground/30;
+  }
+  .dot.work {
+    @apply animate-pulse bg-primary;
+  }
+  .dot.bg {
+    @apply border-2 border-primary bg-transparent;
+  }
 }

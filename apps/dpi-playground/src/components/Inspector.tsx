@@ -4,6 +4,7 @@ import {
   Activity,
   Braces,
   ChevronDown,
+  ChevronRight,
   FolderOpen,
   PanelLeftClose,
   PanelLeftOpen,
@@ -20,7 +21,7 @@ import TasksPanel from "./TasksPanel";
 import ExtensionsPanel from "./ExtensionsPanel";
 import ContextBar from "./ContextBar";
 import { message } from "../client/hub";
-import { toolSignature } from "../client/signature";
+import { toolSignature, type TokenKind } from "../client/signature";
 import {
   agentHandleAtom,
   agentStateAtom,
@@ -49,8 +50,30 @@ import {
 } from "../client/store";
 import type { SharedState } from "../client/feeds";
 import { store } from "../client/state";
-import { cx } from "../client/cx";
 import { useBound } from "../client/useBound";
+import { Button } from "@/components/motion/button";
+import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/motion/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
+import { Switch } from "@/components/motion/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/motion/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ErrorText, Hint, PanelHeading, SectionLabel } from "@/components/ui/text";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 const tabs = [
   { id: "session", label: "Session", icon: FolderOpen },
@@ -59,6 +82,18 @@ const tabs = [
   { id: "tools", label: "Tools", icon: Wrench },
   { id: "extensions", label: "Extend", icon: Puzzle },
 ];
+
+const tokenColor: Record<TokenKind, string> = {
+  keyword: "text-primary",
+  function: "text-amber-200",
+  property: "text-teal-200",
+  type: "text-blue-300",
+  string: "text-orange-200",
+  number: "text-purple-300",
+  comment: "text-muted-foreground/80 italic",
+  punct: "text-foreground/60",
+  text: "",
+};
 
 export default function Inspector() {
   const [tab, setTab] = useAtom(tabAtom);
@@ -69,64 +104,102 @@ export default function Inspector() {
   const stateDraft = useStateDraft();
 
   return (
-    <aside className={cx("inspector", !expanded && "collapsed", overlay && "overlay")}>
+    <aside
+      className={cn(
+        "inspector flex h-full min-h-0 shrink-0 flex-col border-r border-border bg-topbar",
+        expanded ? "w-[450px]" : "collapsed w-[52px]",
+        // Narrow screens float the expanded inspector over the chat as a drawer.
+        overlay &&
+          "overlay max-[1100px]:absolute max-[1100px]:inset-y-0 max-[1100px]:left-0 max-[1100px]:z-30 max-[1100px]:w-[min(420px,100%)] max-[1100px]:shadow-[20px_0_60px_rgb(0_0_0/0.55)]",
+      )}
+    >
       {!expanded ? (
-        <div className="panel-rail" aria-label="Inspector (collapsed)">
-          <button
-            className="icon-button panel-toggle"
+        <div
+          className="panel-rail flex h-full flex-col items-center gap-1.5 overflow-y-auto py-2.5 [scrollbar-width:none]"
+          aria-label="Inspector (collapsed)"
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="panel-toggle mb-1.5 text-muted-foreground hover:text-foreground"
             aria-label="Expand inspector"
             title={`Expand inspector (${panelKeys.inspector})`}
             onClick={() => showInspector()}
           >
-            <PanelLeftOpen size={18} />
-          </button>
+            <PanelLeftOpen className="size-4" />
+          </Button>
           {tabs.map((t) => (
             <button
               key={t.id}
-              className={cx("rail-tab", tab === t.id && "active")}
+              type="button"
+              className={cn(
+                "rail-tab relative grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                tab === t.id &&
+                  "active bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+              )}
               aria-label={`Open ${t.label}`}
               title={t.label}
               onClick={() => showInspector(t.id)}
             >
-              <t.icon size={20} />
+              <t.icon className="size-[18px]" />
               {t.id === "tasks" && tasks.length > 0 && (
-                <span className="count">{tasks.length}</span>
+                <span className="count absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground tabular-nums">
+                  {tasks.length}
+                </span>
               )}
             </button>
           ))}
         </div>
       ) : (
         <>
-          <div className="inspector-tabs" role="tablist" aria-label="Session details">
-            {tabs.map((t) => (
-              <button
-                id={`inspector-tab-${t.id}`}
-                key={t.id}
-                role="tab"
-                aria-controls="inspector-panel"
-                aria-selected={tab === t.id}
-                className={cx(tab === t.id && "active")}
-                onClick={() => setTab(t.id)}
+          <div className="flex shrink-0 items-center gap-1 border-b border-border pr-2 pl-1">
+            <Tabs variant="underline" value={tab} onValueChange={setTab} className="min-w-0 flex-1">
+              <TabsList
+                aria-label="Session details"
+                className="inspector-tabs w-full gap-0 border-transparent"
               >
-                <t.icon size={18} />
-                {t.label}
-                {t.id === "tasks" && tasks.length > 0 && (
-                  <span className="count">{tasks.length}</span>
-                )}
-              </button>
-            ))}
-            <button
-              className="icon-button panel-toggle"
+                {tabs.map((t) => (
+                  <TabsTrigger
+                    key={t.id}
+                    value={t.id}
+                    id={`inspector-tab-${t.id}`}
+                    aria-controls="inspector-panel"
+                    indicatorClassName="h-0.5 rounded-full"
+                    className={cn(
+                      "min-h-0 flex-1 flex-col justify-center gap-1 rounded-md px-1 pt-2.5 pb-2 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                      tab === t.id && "active text-primary",
+                    )}
+                  >
+                    <t.icon className="size-4" />
+                    <span className="inline-flex items-center gap-1">
+                      {t.label}
+                      {t.id === "tasks" && tasks.length > 0 && (
+                        <span className="count rounded-full bg-primary/15 px-1.5 text-[11px] leading-4 font-semibold text-primary tabular-nums">
+                          {tasks.length}
+                        </span>
+                      )}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="panel-toggle shrink-0 text-muted-foreground hover:text-foreground"
               aria-label="Collapse inspector"
               title={`Collapse inspector (${panelKeys.inspector})`}
               onClick={hideInspector}
             >
-              <PanelLeftClose size={18} />
-            </button>
+              <PanelLeftClose className="size-4" />
+            </Button>
           </div>
           <div
             id="inspector-panel"
-            className={cx("inspector-body", tab === "session" && "session-panel")}
+            className={cn(
+              "inspector-body flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-color:var(--color-border-strong)_transparent] [scrollbar-width:thin]",
+              tab !== "session" && "gap-4 p-5",
+            )}
             role="tabpanel"
             aria-labelledby={`inspector-tab-${tab}`}
           >
@@ -160,6 +233,15 @@ function SessionTab() {
     { label: "Cache read", tokens: usage.cacheRead, cost: usage.cacheReadCost },
     { label: "Cache write", tokens: usage.cacheWrite, cost: usage.cacheWriteCost },
   ];
+  const metrics = [
+    {
+      value: number(usage.tokens),
+      label: "total tokens",
+      title: `${usage.tokens.toLocaleString("en-US")} total tokens`,
+    },
+    { value: `$${usage.cost.toFixed(4)}`, label: "agent cost" },
+    { value: String(detail?.tools.length ?? 0), label: "tools" },
+  ];
 
   function renameSession() {
     const handle = store.get(sessionHandleAtom);
@@ -176,110 +258,163 @@ function SessionTab() {
 
   return (
     <>
-      <section className="session-heading">
-        <h1>
-          <span>{sessionSummary?.name ?? "Loading session"}</span>
-          <button
-            className="icon-button"
+      <section className="session-heading grid gap-2.5 p-5 pb-4">
+        <h1 className="flex min-w-0 items-center justify-between gap-2 font-heading text-lg font-semibold">
+          <span className="truncate">{sessionSummary?.name ?? "Loading session"}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="-mr-2 size-8 shrink-0 text-muted-foreground hover:text-foreground"
             title="Rename session"
             aria-label="Rename session"
             onClick={renameSession}
           >
-            <Pencil size={18} />
-          </button>
+            <Pencil className="size-4" />
+          </Button>
         </h1>
         <button
-          className="path cwd-button"
+          type="button"
+          className="path cwd-button -mx-1.5 flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left font-mono text-[13px] text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           title={sessionSummary?.cwd}
           aria-label="Show full working directory"
           onClick={() => openDialog({ kind: "path", path: sessionSummary?.cwd ?? "" })}
         >
-          <FolderOpen size={18} />
-          <span className="cwd-trail" dir="rtl">
+          <FolderOpen className="size-4 shrink-0" />
+          <span className="cwd-trail min-w-0 flex-1 truncate" dir="rtl">
             <bdi dir="ltr">{sessionSummary?.cwd}</bdi>
           </span>
         </button>
-        <div className="session-status">
-          <span className={cx("status-pill", busy && "working")}>
-            <i />
+        <div className="session-status flex flex-wrap items-center gap-2">
+          <Badge
+            variant={busy ? "primary" : "default"}
+            className={cn("status-pill gap-1.5", busy && "working")}
+          >
+            <span
+              aria-hidden
+              className={cn("size-1.5 rounded-full bg-current", busy && "animate-pulse")}
+            />
             {busy ? "Working" : "Idle"}
-          </span>
-          {background > 0 && <span className="background-pill">{background} background</span>}
-          <span className="saved">
-            <Server size={18} />
+          </Badge>
+          {background > 0 && (
+            <Badge variant="outline" className="background-pill">
+              {background} background
+            </Badge>
+          )}
+          <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+            <Server className="size-3.5" />
             {device?.id}
           </span>
         </div>
       </section>
-      <section className="model-section">
-        <div className="section-label">
-          <span>AGENT</span>
-        </div>
-        <button className="model-button" onClick={() => openDialog({ kind: "models" })}>
-          <img src={icon(models, agentState.agent.model?.modelId)} alt="" />
-          <div>
-            <strong>{currentModel?.name ?? agentState.agent.model?.modelId ?? "Loading…"}</strong>
-            <small>
-              {currentModel?.tier ?? ""} / {agentState.agent.model?.provider ?? ""}
-            </small>
-          </div>
-          <ChevronDown size={18} />
-        </button>
-        <div className="thinking-row">
-          <span>Thinking</span>
-          <select
-            aria-label="Thinking level"
-            value={thinking}
-            onChange={(e) => {
-              setThinking(e.target.value as ThinkingLevel);
-              configure(
-                { thinkingLevel: e.target.value as ThinkingLevel },
-                `Thinking ${e.target.value}. Used on the next turn.`,
-              );
-            }}
+      <section className="model-section grid gap-6 border-t border-border p-5">
+        <div className="grid gap-2.5">
+          <SectionLabel>
+            <span>Agent</span>
+          </SectionLabel>
+          <button
+            type="button"
+            className="model-button flex w-full items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-colors outline-none hover:border-border-strong hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => openDialog({ kind: "models" })}
           >
-            {THINKING_LEVELS.map((level) => (
-              <option key={level}>{level}</option>
-            ))}
-          </select>
+            <img
+              src={icon(models, agentState.agent.model?.modelId)}
+              alt=""
+              className="size-8 shrink-0 rounded-lg bg-foreground object-contain p-1"
+            />
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <strong className="truncate text-sm font-semibold">
+                {currentModel?.name ?? agentState.agent.model?.modelId ?? "Loading…"}
+              </strong>
+              <small className="truncate text-xs text-muted-foreground">
+                {currentModel?.tier ?? ""} / {agentState.agent.model?.provider ?? ""}
+              </small>
+            </div>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          </button>
+          <div className="thinking-row flex items-center justify-between gap-3">
+            <span className="text-sm">Thinking</span>
+            <Select
+              value={thinking}
+              onValueChange={(level) => {
+                setThinking(level as ThinkingLevel);
+                configure(
+                  { thinkingLevel: level as ThinkingLevel },
+                  `Thinking ${level}. Used on the next turn.`,
+                );
+              }}
+              className="w-36"
+            >
+              <SelectTrigger aria-label="Thinking level" className="py-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {THINKING_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <ContextBar />
-        <section className="stats-section" aria-labelledby="stats-title">
-          <div className="section-label">
-            <span id="stats-title">STATS</span>
+        <section className="stats-section grid gap-2.5" aria-labelledby="stats-title">
+          <SectionLabel>
+            <span id="stats-title">Stats</span>
+          </SectionLabel>
+          <div className="metrics grid grid-cols-3 gap-2">
+            {metrics.map((m) => (
+              <div
+                key={m.label}
+                title={m.title}
+                className="grid min-w-0 gap-0.5 rounded-xl border border-border bg-card px-3 py-2.5"
+              >
+                <span className="truncate font-heading text-base font-semibold tabular-nums">
+                  {m.value}
+                </span>
+                <small className="text-xs text-muted-foreground">{m.label}</small>
+              </div>
+            ))}
           </div>
-          <div className="metrics">
-            <div title={`${usage.tokens.toLocaleString("en-US")} total tokens`}>
-              <span>{number(usage.tokens)}</span>
-              <small>total tokens</small>
-            </div>
-            <div>
-              <span>${usage.cost.toFixed(4)}</span>
-              <small>agent cost</small>
-            </div>
-            <div>
-              <span>{detail?.tools.length ?? 0}</span>
-              <small>tools</small>
-            </div>
-          </div>
-          <table className="usage-breakdown" aria-label="Agent token and cost breakdown">
-            <thead>
-              <tr>
-                <th scope="col">Type</th>
-                <th scope="col">Tokens</th>
-                <th scope="col">Cost (USD)</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="usage-breakdown" aria-label="Agent token and cost breakdown">
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead
+                  scope="col"
+                  className="h-9 px-0 text-xs font-medium text-muted-foreground"
+                >
+                  Type
+                </TableHead>
+                <TableHead
+                  scope="col"
+                  className="h-9 text-right text-xs font-medium text-muted-foreground"
+                >
+                  Tokens
+                </TableHead>
+                <TableHead
+                  scope="col"
+                  className="h-9 px-0 text-right text-xs font-medium text-muted-foreground"
+                >
+                  Cost (USD)
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {usageRows.map((row) => (
-                <tr key={row.label}>
-                  <th scope="row">{row.label}</th>
-                  <td>{row.tokens.toLocaleString("en-US")}</td>
-                  <td>${row.cost.toFixed(4)}</td>
-                </tr>
+                <TableRow key={row.label} className="border-border hover:bg-transparent">
+                  <TableHead scope="row" className="h-9 px-0 font-normal text-muted-foreground">
+                    {row.label}
+                  </TableHead>
+                  <TableCell className="text-right tabular-nums">
+                    {row.tokens.toLocaleString("en-US")}
+                  </TableCell>
+                  <TableCell className="px-0 text-right tabular-nums">
+                    ${row.cost.toFixed(4)}
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </section>
       </section>
     </>
@@ -383,46 +518,49 @@ function StateTab({ draft: d }: { draft: ReturnType<typeof useStateDraft> }) {
   } = d;
   return (
     <>
-      <div className="panel-heading">
-        <h2>App State</h2>
-        <Braces size={18} />
+      <div className="grid gap-1.5">
+        <PanelHeading>
+          <h2>App State</h2>
+          <Braces />
+        </PanelHeading>
+        <Hint>
+          One shared JSON object for every agent, session and fork on {device?.id}. You and your
+          agents can read, create, update or delete values and fields. Changes appear live and
+          persist across closed browsers, interrupted agents and backend restarts.
+        </Hint>
       </div>
-      <p className="hint app-state-description">
-        One shared JSON object for every agent, session and fork on {device?.id}. You and your
-        agents can read, create, update or delete values and fields. Changes appear live and persist
-        across closed browsers, interrupted agents and backend restarts.
-      </p>
-      <textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        className="app-state-json"
-        aria-label="App State JSON"
-        spellCheck={false}
-        disabled={saving || !shared}
-        rows={12}
-      />
-      <div className="state-json-actions">
-        {conflict && (
-          <span className="hint">State changed elsewhere. Load the latest JSON before saving.</span>
-        )}
-        {dirty && (
-          <button className="secondary" disabled={saving} onClick={() => resetDraft()}>
-            {conflict ? "Load latest" : "Reset"}
-          </button>
-        )}
-        <button
-          className="primary small"
-          disabled={!dirty || saving || conflict}
-          onClick={saveJson}
-        >
-          {saving ? "Saving…" : "Save JSON"}
-        </button>
+      <div className="grid gap-2.5">
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          className="app-state-json field-sizing-fixed resize-y rounded-xl bg-background px-3.5 py-3 font-mono text-xs leading-5 md:text-xs dark:bg-background"
+          aria-label="App State JSON"
+          spellCheck={false}
+          disabled={saving || !shared}
+          rows={12}
+        />
+        <div className="state-json-actions flex flex-wrap items-center justify-end gap-2">
+          {conflict && (
+            <span className="mr-auto text-xs text-warning">
+              State changed elsewhere. Load the latest JSON before saving.
+            </span>
+          )}
+          {dirty && (
+            <Button variant="secondary" size="sm" disabled={saving} onClick={() => resetDraft()}>
+              {conflict ? "Load latest" : "Reset"}
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!dirty || saving || conflict}
+            onClick={saveJson}
+          >
+            {saving ? "Saving…" : "Save JSON"}
+          </Button>
+        </div>
+        {error && <ErrorText role="alert">{error}</ErrorText>}
       </div>
-      {error && (
-        <p className="message-error" role="alert">
-          {error}
-        </p>
-      )}
       <StateEditor
         value={shared?.value ?? {}}
         disabled={saving || dirty || !shared}
@@ -444,70 +582,104 @@ function ToolsTab() {
 
   return (
     <>
-      <div className="panel-heading">
-        <h2>Tools</h2>
-        <span className="tag">
-          {offered} / {detail?.tools.length ?? 0}
-        </span>
+      <div className="grid gap-1.5">
+        <PanelHeading>
+          <h2>Tools</h2>
+          <Badge variant="outline" className="tabular-nums">
+            {offered} / {detail?.tools.length ?? 0}
+          </Badge>
+        </PanelHeading>
+        <Hint>
+          Every tool this agent&apos;s extensions provide. Open one to see its definition.
+        </Hint>
       </div>
-      <p className="hint">
-        Every tool this agent&apos;s extensions provide. Open one to see its definition.
-      </p>
-      <div className="hook-card">
-        <div>
-          <ShieldCheck size={18} />
-          <strong>Read only</strong>
-          <button
-            className={cx("switch", readOnly && "on")}
-            role="switch"
-            aria-checked={readOnly}
-            aria-label="Read only"
-            onClick={() =>
-              configure(
-                { readOnly: !readOnly },
-                readOnly
-                  ? "Read only off. Every tool is back."
-                  : "Read only on. Tools that write are disabled.",
-              )
-            }
+      <Card size="compact" className="bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <ShieldCheck className="size-4 text-muted-foreground" />
+            Read only
+          </CardTitle>
+          <CardDescription>
+            Offers this agent only tools that read. Tools that create, update or delete leave its
+            next request, and the choice is stored with the agent.
+          </CardDescription>
+          <CardAction>
+            <Switch
+              ariaLabel="Read only"
+              checked={readOnly}
+              onCheckedChange={() =>
+                configure(
+                  { readOnly: !readOnly },
+                  readOnly
+                    ? "Read only off. Every tool is back."
+                    : "Read only on. Tools that write are disabled.",
+                )
+              }
+            />
+          </CardAction>
+        </CardHeader>
+      </Card>
+      <div className="grid">
+        {detail?.tools.map((tool) => (
+          <details
+            key={tool.name}
+            className={cn(
+              "tool-row group border-b border-border last:border-b-0",
+              !tool.offered && "disabled",
+            )}
           >
-            <span />
-          </button>
-        </div>
-        <p>
-          Offers this agent only tools that read. Tools that create, update or delete leave its next
-          request, and the choice is stored with the agent.
-        </p>
+            <summary className="-mx-2 flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2.5 outline-none select-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring">
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90 motion-reduce:transition-none" />
+              <Wrench
+                className={cn(
+                  "size-3.5 shrink-0 text-muted-foreground",
+                  !tool.offered && "opacity-50",
+                )}
+              />
+              <strong
+                className={cn(
+                  "min-w-0 truncate font-mono text-[13px] font-medium",
+                  !tool.offered && "text-muted-foreground opacity-70",
+                )}
+              >
+                {tool.name}
+              </strong>
+              <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                {!tool.offered && (
+                  <Badge variant="warning" className="tool-disabled">
+                    disabled
+                  </Badge>
+                )}
+                <Badge variant={tool.replay === "safe" ? "success" : "default"}>
+                  {tool.replay === "safe" ? "replay safe" : "interrupt on crash"}
+                </Badge>
+              </span>
+            </summary>
+            <div className={cn("grid gap-3 pt-1 pb-4 pl-6", !tool.offered && "opacity-60")}>
+              <p className="text-sm leading-6 text-muted-foreground">{tool.description}</p>
+              {tool.parameters ? (
+                <pre
+                  className="tool-signature overflow-x-auto rounded-lg border border-border bg-background px-3.5 py-3 font-mono text-xs leading-5 [overflow-wrap:anywhere] whitespace-pre-wrap text-foreground"
+                  aria-label={`${tool.name} TypeScript definition`}
+                >
+                  <code>
+                    {signatures.get(tool.name)?.map((t, i) => (
+                      <span key={i} className={tokenColor[t.kind]}>
+                        {t.text}
+                      </span>
+                    ))}
+                  </code>
+                </pre>
+              ) : null}
+              <small className="text-xs leading-5 text-muted-foreground">
+                {tool.replay === "safe"
+                  ? "An interrupted execution may run again after recovery."
+                  : "A crash records an interrupted result instead of rerunning this effect."}
+              </small>
+            </div>
+          </details>
+        ))}
       </div>
-      {detail?.tools.map((tool) => (
-        <details key={tool.name} className={cx("tool-row", !tool.offered && "disabled")}>
-          <summary>
-            <Wrench size={18} />
-            <strong>{tool.name}</strong>
-            {!tool.offered && <span className="tag tool-disabled">disabled</span>}
-            <span className="tag">
-              {tool.replay === "safe" ? "replay safe" : "interrupt on crash"}
-            </span>
-          </summary>
-          <p>{tool.description}</p>
-          {tool.parameters ? (
-            <pre className="tool-signature" aria-label={`${tool.name} TypeScript definition`}>
-              <code>
-                {signatures.get(tool.name)?.map((t, i) => (
-                  <span key={i} className={`tk-${t.kind}`}>
-                    {t.text}
-                  </span>
-                ))}
-              </code>
-            </pre>
-          ) : null}
-          <small>
-            {tool.replay === "safe"
-              ? "An interrupted execution may run again after recovery."
-              : "A crash records an interrupted result instead of rerunning this effect."}
-          </small>
-        </details>
-      ))}
     </>
   );
 }

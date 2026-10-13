@@ -245,9 +245,9 @@ export default function Composer() {
   const modeLabel = MODES.find((m) => m.id === mode)!.label;
 
   return (
-    <div className="composer-region">
+    <div className="mx-auto w-full max-w-3xl shrink-0 px-6 pt-3 pb-4 max-[760px]:px-3 max-[760px]:pb-3">
       {agentState.inbox.length > 0 && (
-        <div className="queue">
+        <div className="queue mb-2">
           <QueuedMessageLayer
             messages={agentState.inbox.map((item) => ({
               id: String(item.id),
@@ -376,12 +376,10 @@ export default function Composer() {
           </div>
         </div>
       </div>
-      <div className="composer-footnote">
-        <span>
-          <i className="live-dot" />
-          Closing this window never interrupts your agent.
-        </span>
-      </div>
+      <p className="mt-2.5 flex items-center gap-2 px-3 text-xs text-muted-foreground">
+        <i className="size-1 rounded-full bg-primary" />
+        Closing this window never interrupts your agent.
+      </p>
     </div>
   );
 }
