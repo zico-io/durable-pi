@@ -40,7 +40,8 @@ try {
   pass("device online in the tree");
 
   await page.getByRole("button", { name: "New session", exact: true }).click();
-  await page.getByLabel("Device", { exact: true }).selectOption(device);
+  await page.getByRole("button", { name: "Device", exact: true }).click();
+  await page.getByRole("option", { name: new RegExp(`^${device} ·`) }).click();
   await page.getByLabel("Session name").fill(name);
   await expect(page.getByLabel("Working directory", { exact: true })).not.toHaveValue("", {
     timeout: 15000,
@@ -81,10 +82,11 @@ try {
   await page.getByLabel("Search models").fill(other.name);
   await page.locator(".model-list button").filter({ hasText: other.name }).first().click();
   await expect(page.locator(".model-button")).toContainText(other.name);
-  await page.getByLabel("Thinking level").selectOption("minimal");
+  await page.getByRole("button", { name: "Thinking level" }).click();
+  await page.getByRole("option", { name: "minimal", exact: true }).click();
   await expect(page.locator(".toast")).toContainText("Thinking minimal");
   await page.reload();
-  await expect(page.getByLabel("Thinking level")).toHaveValue("minimal", { timeout: 20000 });
+  await expect(page.getByRole("button", { name: "Thinking level" })).toHaveText("minimal", { timeout: 20000 });
   await expect(page.locator(".usage-breakdown")).toBeVisible();
   pass("model picker, thinking level and usage table");
 

@@ -152,7 +152,8 @@ try {
 
   // New session on box-b through the directory browser.
   await page.getByRole("button", { name: "New session", exact: true }).click();
-  await page.getByLabel("Device", { exact: true }).selectOption("box-b");
+  await page.getByRole("button", { name: "Device", exact: true }).click();
+  await page.getByRole("option", { name: /^box-b ·/ }).click();
   await page.getByLabel("Session name").fill("UI on B");
   await page.getByRole("option", { name: "project-alpha" }).click();
   await expect(page.getByLabel("Working directory", { exact: true })).toHaveValue(/project-alpha$/);
@@ -233,7 +234,8 @@ try {
   await page.getByLabel("Search models").fill("echo");
   await page.locator(".model-list button").filter({ hasText: "Faux Echo" }).click();
   await expect(page.locator(".model-modal")).toHaveCount(0);
-  await page.getByLabel("Thinking level").selectOption("minimal");
+  await page.getByRole("button", { name: "Thinking level" }).click();
+  await page.getByRole("option", { name: "minimal", exact: true }).click();
   await expect(page.locator(".toast")).toContainText("Thinking minimal");
   await tab("Tools");
   await expect(page.locator(".tool-row").filter({ has: page.locator("summary strong", { hasText: /^bash$/ }) })).toBeVisible();
@@ -400,7 +402,7 @@ try {
   // Session tab usage; implementation details (storage paths) have no tab.
   await tab("Session");
   await expect(page.locator(".usage-breakdown")).toBeVisible();
-  await expect(page.getByLabel("Thinking level")).toHaveValue("minimal");
+  await expect(page.getByRole("button", { name: "Thinking level" })).toHaveText("minimal");
   await expect(page.getByRole("tab", { name: "Storage" })).toHaveCount(0);
   pass("usage table, no storage tab");
 

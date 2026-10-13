@@ -3,6 +3,9 @@ import { Copy, Loader, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
 import type { NetworkDevice } from "@sdk/api";
 import { hub, message } from "../client/hub";
 import { ago, notify } from "../client/store";
+import { Button } from "@/components/motion/button";
+import { ErrorText, Eyebrow, Hint } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
 /** The exact fix for this device's state. Device setup happens in the terminal, never in this UI. */
 function fixFor(d: NetworkDevice): { title: string; text: string; command?: string; alt?: string } {
@@ -82,53 +85,63 @@ export default function OfflinePanel({ device }: { device: NetworkDevice }) {
     }
   }
 
+  const Icon =
+    device.status === "checking"
+      ? Loader
+      : device.status === "mismatch" || device.status === "unauthorized"
+        ? ShieldAlert
+        : WifiOff;
+
   return (
-    <section className={`chat-panel offline-panel ${device.status}`} aria-live="polite">
-      <div className="chat-empty">
-        {device.status === "checking" ? (
-          <Loader className="spin" size={30} />
-        ) : device.status === "mismatch" || device.status === "unauthorized" ? (
-          <ShieldAlert size={30} />
-        ) : (
-          <WifiOff size={30} />
-        )}
-        <span className="eyebrow">
-          {device.kind.toUpperCase()} · {device.url}
+    <section
+      className={cn("offline-panel flex min-w-0 flex-1 overflow-y-auto", device.status)}
+      aria-live="polite"
+    >
+      <div className="m-auto flex w-full max-w-xl flex-col items-center gap-4 px-6 py-12 text-center">
+        <span className="grid size-14 place-items-center rounded-2xl border border-border bg-card text-muted-foreground">
+          <Icon className={cn("size-6", device.status === "checking" && "animate-spin")} />
         </span>
-        <h2>{fix.title}</h2>
-        <p>{fix.text}</p>
-        {device.error && <p className="hint offline-error">{device.error}</p>}
+        <Eyebrow className="normal-case tracking-normal">
+          <span className="uppercase tracking-[0.14em]">{device.kind}</span> ·{" "}
+          <span className="font-mono">{device.url}</span>
+        </Eyebrow>
+        <h2 className="font-heading text-2xl font-bold tracking-tight">{fix.title}</h2>
+        <p className="text-sm leading-6 text-muted-foreground">{fix.text}</p>
+        {device.error && (
+          <p className="w-full rounded-xl border border-border bg-card px-3 py-2 font-mono text-xs leading-5 break-words text-muted-foreground">
+            {device.error}
+          </p>
+        )}
         {fix.command && (
-          <div className="offline-command">
-            <code>{fix.command}</code>
-            <button
-              className="icon-button"
+          <div className="offline-command flex w-full items-center gap-2 rounded-xl border border-border bg-background py-1.5 pr-1.5 pl-4 text-left">
+            <code className="min-w-0 flex-1 truncate font-mono text-[13px] text-foreground">
+              {fix.command}
+            </code>
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Copy command"
               onClick={() => copy(fix.command!)}
             >
-              <Copy size={18} />
-            </button>
+              <Copy className="size-4" />
+            </Button>
           </div>
         )}
-        {fix.command && (
-          <p className="hint">Run it in this repo&apos;s terminal, then press Check now.</p>
-        )}
+        {fix.command && <Hint>Run it in this repo&apos;s terminal, then press Check now.</Hint>}
         {fix.alt && (
-          <p className="hint">
-            Never deployed or rebuilt? <code>{fix.alt}</code> provisions it from scratch.
-          </p>
+          <Hint>
+            Never deployed or rebuilt?{" "}
+            <code className="rounded-md bg-accent px-1.5 py-0.5 font-mono text-[13px] text-foreground">
+              {fix.alt}
+            </code>{" "}
+            provisions it from scratch.
+          </Hint>
         )}
-        <div className="offline-actions">
-          <button className="secondary" disabled={busy} onClick={check}>
-            <RefreshCw size={18} />
-            {busy ? "Checking…" : "Check now"}
-          </button>
-        </div>
-        {error && (
-          <p className="message-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Button variant="secondary" className="mt-2" disabled={busy} onClick={check}>
+          <RefreshCw className={cn("size-4", busy && "animate-spin")} />
+          {busy ? "Checking…" : "Check now"}
+        </Button>
+        {error && <ErrorText role="alert">{error}</ErrorText>}
       </div>
     </section>
   );

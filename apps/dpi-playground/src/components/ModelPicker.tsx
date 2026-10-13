@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
-import { Check, X } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import type { ModelInfo } from "@sdk/api";
 import {
   agentHandleAtom,
@@ -14,10 +14,20 @@ import {
   refreshDetail,
 } from "../client/store";
 import { store } from "../client/state";
-import { cx } from "../client/cx";
-import Backdrop from "./Backdrop";
+import { Input } from "@/components/motion/input";
+import { Modal, ModalHeader } from "@/components/ui/modal";
+import { Hint } from "@/components/ui/text";
+import { cn } from "@/lib/utils";
 
-export default function ModelPicker({ onClose }: { onClose: () => void }) {
+export default function ModelPicker({
+  open,
+  onClose,
+  onExited,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onExited: () => void;
+}) {
   const models = useAtomValue(modelsAtom);
   const device = useAtomValue(deviceAtom);
   const current = useAtomValue(agentStateAtom).agent.model;
@@ -39,43 +49,46 @@ export default function ModelPicker({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Backdrop onClose={onClose}>
-      <section className="modal model-modal">
-        <header>
-          <div>
-            <span className="eyebrow">PER AGENT · {device?.id}</span>
-            <h2>Choose a model</h2>
-          </div>
-          <button className="icon-button" aria-label="Close model picker" onClick={onClose}>
-            <X size={18} />
+    <Modal open={open} onClose={onClose} onExited={onExited} className="model-modal max-w-xl">
+      <ModalHeader
+        eyebrow={`Per agent · ${device?.id ?? ""}`}
+        title="Choose a model"
+        closeLabel="Close model picker"
+        onClose={onClose}
+      />
+      <Input
+        value={search}
+        onChange={setSearch}
+        placeholder="Search models or tiers…"
+        aria-label="Search models"
+        leftIcon={<Search />}
+        classNames={{ input: "text-sm" }}
+      />
+      <div className="model-list -mx-2 grid max-h-[50dvh] gap-1 overflow-y-auto px-2">
+        {filtered.map((m) => (
+          <button
+            key={`${m.provider}/${m.id}`}
+            className={cn(
+              "flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring",
+              isCurrent(m) && "selected border-primary/30 bg-primary/10",
+            )}
+            onClick={() => choose(m)}
+          >
+            <img src={icon(models, m.id)} alt="" className="size-9 rounded-lg bg-white p-1.5" />
+            <div className="grid min-w-0 flex-1 gap-0.5">
+              <strong className="truncate text-sm font-semibold">{m.name}</strong>
+              <small className="truncate text-xs text-muted-foreground">
+                {m.tier} / {m.provider} / {number(m.contextWindow)} context
+              </small>
+            </div>
+            {isCurrent(m) && <Check className="size-4 text-primary" />}
           </button>
-        </header>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search models or tiers…"
-          aria-label="Search models"
-        />
-        <div className="model-list">
-          {filtered.map((m) => (
-            <button
-              key={`${m.provider}/${m.id}`}
-              className={cx(isCurrent(m) && "selected")}
-              onClick={() => choose(m)}
-            >
-              <img src={icon(models, m.id)} alt="" />
-              <div>
-                <strong>{m.name}</strong>
-                <small>
-                  {m.tier} / {m.provider} / {number(m.contextWindow)} context
-                </small>
-              </div>
-              {isCurrent(m) && <Check size={18} />}
-            </button>
-          ))}
-        </div>
-        <p className="hint">Models available on {device?.id}. Provider keys stay on the device.</p>
-      </section>
-    </Backdrop>
+        ))}
+        {!filtered.length && (
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">No models match.</p>
+        )}
+      </div>
+      <Hint>Models available on {device?.id}. Provider keys stay on the device.</Hint>
+    </Modal>
   );
 }

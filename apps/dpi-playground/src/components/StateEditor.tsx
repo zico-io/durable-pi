@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { statePath, type JsonValue, type StateChange } from "@sdk/app-state";
-import { cx } from "../client/cx";
 import { useBound } from "../client/useBound";
+import { Button } from "@/components/motion/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/motion/select";
+import { Switch } from "@/components/motion/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 const types = ["string", "number", "boolean", "object", "array", "null"];
 const defaults: Record<string, () => JsonValue> = {
@@ -13,6 +23,37 @@ const defaults: Record<string, () => JsonValue> = {
   array: () => [],
   null: () => null,
 };
+
+function TypeSelect({
+  value,
+  label,
+  disabled,
+  className,
+  onChange,
+}: {
+  value: string;
+  label: string;
+  disabled: boolean;
+  className?: string;
+  onChange: (type: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled} className={className}>
+      <SelectTrigger aria-label={label} className="h-8 py-1 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {types.map((type) => (
+          <SelectItem key={type} value={type} className="text-xs">
+            {type}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+const stepButton = "size-9 shrink-0 text-muted-foreground hover:text-foreground";
 
 export default function StateEditor({
   value,
@@ -39,6 +80,8 @@ export default function StateEditor({
     setSeen(value);
     if (!editing) setDraft(String(value ?? ""));
   }
+  // JSON Pointer escapes "/" inside keys, so every slash is one level.
+  const depth = path.split("/").length - 1;
 
   const change = (operation: StateChange["operation"], next?: JsonValue) =>
     onChange({ operation, path, value: next });
@@ -60,34 +103,41 @@ export default function StateEditor({
   }
 
   return (
-    <div className={cx("state-field", path === "" && "state-root")} data-state-path={path}>
+    <div
+      className={cn(
+        "state-field grid min-w-0 gap-2.5",
+        depth === 0 && "state-root",
+        depth === 1 && "rounded-xl border border-border bg-card p-3",
+        depth > 1 && "border-l-2 border-border-strong py-0.5 pl-3",
+      )}
+      data-state-path={path}
+    >
       {path !== "" && (
-        <div className="state-field-heading">
-          <strong>{label}</strong>
-          <select
+        <div className="state-field-heading flex min-w-0 items-center gap-2">
+          <strong className="min-w-0 flex-1 font-mono text-[13px] font-medium [overflow-wrap:anywhere]">
+            {label}
+          </strong>
+          <TypeSelect
             value={shownKind}
-            aria-label={`Type of ${path}`}
+            label={`Type of ${path}`}
             disabled={disabled}
-            onChange={(e) => {
-              setShownKind(e.target.value);
-              change("update", defaults[e.target.value]!());
+            className="w-28 shrink-0"
+            onChange={(type) => {
+              setShownKind(type);
+              change("update", defaults[type]!());
             }}
-          >
-            {types.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          <button
-            className="icon-button"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             aria-label={`Delete ${path}`}
             title="Delete field"
             disabled={disabled}
             onClick={() => change("delete")}
           >
-            <Trash2 size={18} />
-          </button>
+            <Trash2 className="size-4" />
+          </Button>
         </div>
       )}
       {container ? (
@@ -104,94 +154,96 @@ export default function StateEditor({
           ))}
           {kind === "array" &&
             (adding ? (
-              <form className="state-add" onSubmit={add}>
-                <select
+              <form className="state-add flex flex-wrap items-center gap-2" onSubmit={add}>
+                <TypeSelect
                   value={newType}
-                  aria-label={`New field type in ${path || "/"}`}
+                  label={`New field type in ${path || "/"}`}
                   disabled={disabled}
-                  onChange={(e) => setNewType(e.target.value)}
-                >
-                  {types.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-                <button className="secondary small" disabled={disabled}>
+                  className="min-w-28 flex-1"
+                  onChange={setNewType}
+                />
+                <Button type="submit" variant="secondary" size="sm" disabled={disabled}>
                   Add
-                </button>
-                <button type="button" className="text-button" onClick={() => setAdding(false)}>
+                </Button>
+                <button
+                  type="button"
+                  className="rounded-md px-1 text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => setAdding(false)}
+                >
                   Cancel
                 </button>
               </form>
             ) : (
               <button
-                className="text-button state-add-button"
+                type="button"
+                className="state-add-button inline-flex w-fit items-center gap-1.5 rounded-md text-sm text-primary outline-none hover:underline hover:underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 disabled={disabled}
                 aria-label={`Add item to ${path || "/"}`}
                 onClick={() => setAdding(true)}
               >
-                <Plus size={18} />
+                <Plus className="size-4" />
                 Add item
               </button>
             ))}
         </>
       ) : kind === "number" ? (
-        <div className="state-number">
-          <button
-            className="secondary"
+        <div className="state-number flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="icon"
+            className={stepButton}
             aria-label={`Decrement ${path}`}
             disabled={disabled}
             onClick={() => change("increment", -1)}
           >
-            <Minus size={18} />
-          </button>
+            <Minus className="size-4" />
+          </Button>
           <input
             value={draft}
             type="number"
             step="any"
             aria-label={`Value of ${path}`}
             disabled={disabled}
+            className="h-9 min-w-0 flex-1 [appearance:textfield] rounded-full border border-border bg-background px-3 text-center font-mono text-sm tabular-nums transition-colors outline-none hover:border-border-strong focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             onChange={(e) => setDraft(e.target.value)}
             onFocus={() => setEditing(true)}
             onBlur={save}
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           />
-          <button
-            className="secondary"
+          <Button
+            variant="secondary"
+            size="icon"
+            className={stepButton}
             aria-label={`Increment ${path}`}
             disabled={disabled}
             onClick={() => change("increment", 1)}
           >
-            <Plus size={18} />
-          </button>
+            <Plus className="size-4" />
+          </Button>
         </div>
       ) : kind === "boolean" ? (
-        <div className="state-boolean">
-          <button
-            className={cx("switch", value === true && "on")}
-            role="switch"
-            aria-label={`Value of ${path}`}
-            aria-checked={value === true}
+        <div className="state-boolean flex items-center gap-3">
+          <Switch
+            ariaLabel={`Value of ${path}`}
+            checked={value === true}
             disabled={disabled}
-            onClick={() => change("update", !value)}
-          >
-            <span />
-          </button>
-          <span>{String(value)}</span>
+            onCheckedChange={() => change("update", !value)}
+          />
+          <span className="font-mono text-xs text-muted-foreground">{String(value)}</span>
         </div>
       ) : kind === "string" ? (
-        <textarea
+        <Textarea
           value={draft}
           rows={2}
           aria-label={`Value of ${path}`}
           disabled={disabled}
+          className="min-h-0 rounded-lg bg-background md:text-sm dark:bg-background"
           onChange={(e) => setDraft(e.target.value)}
           onFocus={() => setEditing(true)}
           onBlur={save}
         />
       ) : (
-        <span className="muted">null</span>
+        <span className="font-mono text-xs text-muted-foreground">null</span>
       )}
     </div>
   );

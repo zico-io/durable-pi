@@ -21,7 +21,7 @@ import {
   AnimatedSidebarMenuSubItem,
 } from "@/components/motion/animated-sidebar";
 import { ago } from "../client/store";
-import { cx } from "../client/cx";
+import { cn } from "@/lib/utils";
 
 export type TreeAction = "new-session" | "check" | "new-agent" | "rename" | "archive";
 
@@ -146,7 +146,7 @@ function NodeIcon({ node }: { node: TreeNode }) {
 }
 
 function rowClass(node: TreeNode, selected: boolean) {
-  return cx(
+  return cn(
     "tree-row group/row relative",
     node.type,
     selected && "sel",
@@ -174,7 +174,7 @@ export function DeviceRow({
             <span className="relative grid size-5 place-items-center">
               <DeviceIcon device={d} size={18} />
               <i
-                className={cx(
+                className={cn(
                   "dot absolute -right-0.5 -bottom-0.5 size-2! basis-2! shadow-[0_0_0_2px_var(--color-background)]",
                   dot,
                 )}
@@ -182,13 +182,13 @@ export function DeviceRow({
             </span>
           }
           badge={
-            <span className={cx("text-[11px]", dot === "err" && "text-destructive")}>
+            <span className={cn("text-[11px]", dot === "err" && "text-destructive")}>
               {statusText(d)}
             </span>
           }
           ariaExpanded={node.children.length && !ctx.collapsed ? open : undefined}
           onSelect={() => ctx.activate(node)}
-          className={cx("font-semibold", ctx.collapsed && "px-4")}
+          className={cn("font-semibold", ctx.collapsed && "px-4")}
         >
           {d.id}
         </AnimatedSidebarMenuButton>
@@ -239,7 +239,7 @@ function NodeRow({ node, ctx }: { node: TreeNode; ctx: TreeContext }) {
           icon={<NodeIcon node={node} />}
           isActive={ctx.isSelected(node)}
           onSelect={() => ctx.activate(node)}
-          className={cx("pr-8 text-[13px]", node.type === "session" && "font-medium")}
+          className={cn("pr-8 text-[13px]", node.type === "session" && "font-medium")}
         >
           <span className="flex min-w-0 items-center gap-2">
             <span className="name truncate">{label}</span>
@@ -259,7 +259,7 @@ function NodeRow({ node, ctx }: { node: TreeNode; ctx: TreeContext }) {
             onClick={() => ctx.toggle(node)}
             className="absolute inset-y-0 right-1 z-10 my-auto grid size-6 place-items-center rounded-md text-muted-foreground hover:text-foreground"
           >
-            <ChevronRight className={cx("size-3.5 transition-transform", open && "rotate-90")} />
+            <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
           </button>
         )}
         <Acts>

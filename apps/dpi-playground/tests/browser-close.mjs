@@ -53,10 +53,11 @@ try {
   await page.locator(".model-list button").filter({ hasText: other.name }).first().click();
   await expect(page.locator(".model-modal")).toHaveCount(0);
   await expect(page.locator(".model-button")).toContainText(other.name);
-  await page.getByLabel("Thinking level").selectOption("minimal");
+  await page.getByRole("button", { name: "Thinking level" }).click();
+  await page.getByRole("option", { name: "minimal", exact: true }).click();
   await expect(page.locator(".toast")).toContainText("Thinking minimal");
   await page.reload();
-  await expect(page.getByLabel("Thinking level")).toHaveValue("minimal", { timeout: 20000 });
+  await expect(page.getByRole("button", { name: "Thinking level" })).toHaveText("minimal", { timeout: 20000 });
 
   await page
     .getByLabel("Message your agent")
