@@ -4,6 +4,7 @@ import { atom } from "jotai";
 import type { AgentDetail, ModelInfo, NetworkDevice, TaskNode } from "@sdk/api";
 import { sumUsage } from "@sdk/transcript";
 import { lineage } from "@sdk/models";
+import type { AgentHandle } from "@sdk/client";
 import { HubStream, type StreamState } from "./stream";
 import { deviceClient, hub, message } from "./hub";
 import {
@@ -239,6 +240,15 @@ export const currentModelAtom = atom((get) => {
   const m = get(agentStateAtom).agent.model;
   return get(modelsAtom).find((x) => x.provider === m?.provider && x.id === m?.modelId);
 });
+
+/** Change the selected agent's settings; the device applies them from the next turn. */
+export function configure(patch: Parameters<AgentHandle["configure"]>[0], done?: string) {
+  void attempt(async () => {
+    await store.get(agentHandleAtom)!.configure(patch);
+    await refreshDetail();
+    if (done) notify(done);
+  });
+}
 
 /** Tools and extensions come from GET agent (not streamed); refresh on selection and config changes. */
 export const detailAtom = atom<AgentDetail | undefined>(undefined);

@@ -993,66 +993,7 @@ svg {
   padding: 18px clamp(20px, 3vw, 46px) 16px;
   background: linear-gradient(transparent, #161011 15%);
 }
-.composer {
-  background: #281c1d;
-  border: 1px solid #513d3f;
-  border-radius: 11px;
-  box-shadow: 0 6px 30px #0002;
-}
-.composer textarea {
-  width: 100%;
-  display: block;
-  resize: none;
-  min-height: 80px;
-  max-height: 220px;
-  border: 0;
-  box-shadow: none;
-  background: none;
-  padding: 18px 20px 9px;
-  font-size: 16px;
-}
-.composer-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 11px 12px 17px;
-  gap: 7px;
-}
-.composer-left,
-.composer-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.context-indicator {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 16px;
-  color: #f2eeee;
-}
-.composer-left select {
-  font-size: 16px;
-  border: 0;
-  background: none;
-  color: #f2eeee;
-  padding: 4px;
-}
-.interrupt {
-  color: #f2eeee;
-  font-size: 16px;
-  padding: 6px 8px;
-  border-radius: 5px;
-  border: 1px solid #66414460;
-  background: #452b2d24;
-}
-.send {
-  width: 33px;
-  height: 33px;
-  background: var(--accent);
-  color: #f2eeee;
-  border-radius: 7px;
-}
+
 .composer-footnote {
   display: flex;
   align-items: center;
@@ -1345,26 +1286,7 @@ svg {
   overflow: auto;
   color: #f2eeee;
 }
-.queue {
-  margin-bottom: 10px;
-  border: 1px solid #4a3537;
-  background: #2e1f20;
-  border-radius: 7px;
-  padding: 5px 10px;
-}
-.queue > div {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 16px;
-  color: #f2eeee;
-}
-.queue span {
-  flex: 1;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
+
 .history-banner {
   display: flex;
   gap: 7px;
@@ -2029,15 +1951,7 @@ textarea.app-state-json {
   .composer-region {
     padding: 12px;
   }
-  .composer-left {
-    gap: 3px;
-  }
-  .composer-left .context-indicator {
-    display: none;
-  }
-  .composer-right {
-    gap: 8px;
-  }
+
   .modal {
     padding: 22px;
   }
@@ -2093,14 +2007,12 @@ textarea.app-state-json {
 }
 
 /* Accessible red theme: 16px minimum type and high-contrast provider marks. */
-.primary,
-.send {
+.primary {
   background: #b9283c;
   border-color: #df5363;
   color: #fff;
 }
-.primary:hover,
-.send:hover {
+.primary:hover {
   background: #cf354a;
 }
 .model-button img,
@@ -2150,8 +2062,7 @@ button:disabled {
 .panel-heading,
 .job-title,
 .job-meta,
-.composer-footnote,
-.composer-toolbar {
+.composer-footnote {
   flex-wrap: wrap;
 }
 .metrics {
@@ -2230,18 +2141,7 @@ button:disabled {
 .composer-footnote {
   line-height: 1.6;
 }
-.composer-left,
-.composer-right {
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.send {
-  width: 40px;
-  height: 40px;
-}
-.interrupt {
-  min-height: 40px;
-}
+
 .tag {
   line-height: 1.4;
 }
@@ -2278,9 +2178,7 @@ button:disabled {
   .starter-grid {
     grid-template-columns: 1fr;
   }
-  .composer-left .context-indicator {
-    display: none;
-  }
+
   .conversation-select select {
     max-width: 205px;
   }
@@ -2339,13 +2237,7 @@ button:disabled {
   .drawer-backdrop {
     top: 68px;
   }
-  .composer-toolbar {
-    padding-left: 9px;
-  }
-  .composer-left select {
-    max-width: 120px;
-    padding-left: 0;
-  }
+
   .composer-footnote {
     align-items: flex-start;
   }
@@ -2479,8 +2371,6 @@ button:disabled {
 .raw summary span,
 .message-label > span:not(.mini-pi):not(.streaming),
 .composer-footnote,
-.context-indicator,
-.composer-left select,
 .version,
 .session-model,
 .sessions-drawer footer,
@@ -2643,37 +2533,6 @@ textarea::placeholder {
   }
 }
 
-.queue-mode {
-  position: relative;
-  min-width: 150px;
-}
-.composer-left .queue-mode select {
-  appearance: none;
-  width: 100%;
-  max-width: none;
-  min-height: 40px;
-  padding: 7px 36px 7px 12px;
-  border: 1px solid #77515a;
-  border-radius: 8px;
-  background: #342329;
-  color: #f8eeee;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.queue-mode > svg {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--secondary);
-}
-.interrupt .stop-sign {
-  color: #ff647a;
-  stroke: #ffb5c0;
-  flex-shrink: 0;
-}
 .switch {
   width: 58px;
   height: 34px;

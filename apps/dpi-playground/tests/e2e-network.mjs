@@ -127,7 +127,8 @@ try {
   pass("web tree shows the session working and the transcript streams alongside the TUI");
 
   // 3. Steer from the web; the TUI sees it.
-  await page.getByLabel("When busy").selectOption("steer");
+  await page.getByRole("button", { name: "When busy" }).click();
+  await page.getByRole("menuitemradio", { name: "Steer" }).click();
   await page
     .getByLabel("Message your agent")
     .fill("Steering from the web: use bash only for verification runs.");

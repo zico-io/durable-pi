@@ -427,49 +427,6 @@
   flex: 0 1 auto;
 }
 
-/* ---------------------------------------------------------------- composer slash commands */
 .composer {
   position: relative;
-}
-.slash-menu {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(100% + 8px);
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  background: #251a1b;
-  border: 1px solid #544042;
-  border-radius: 10px;
-  box-shadow: 0 20px 60px #0007;
-  z-index: 20;
-  max-height: 320px;
-  overflow-y: auto;
-}
-.slash-menu li {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.slash-menu li.active {
-  background: #ff899714;
-}
-.slash-menu code {
-  color: var(--accent);
-  font-size: 15px;
-}
-.slash-args {
-  color: var(--muted);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 14px;
-}
-.slash-desc {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 14px;
-  text-align: right;
 }

@@ -14,7 +14,6 @@ import {
   Wrench,
 } from "lucide-react";
 import { THINKING_LEVELS, type ThinkingLevel } from "@sdk/api";
-import type { AgentHandle } from "@sdk/client";
 import type { StateChange } from "@sdk/app-state";
 import StateEditor from "./StateEditor";
 import TasksPanel from "./TasksPanel";
@@ -25,8 +24,8 @@ import { toolSignature } from "../client/signature";
 import {
   agentHandleAtom,
   agentStateAtom,
-  attempt,
   busyAtom,
+  configure,
   currentModelAtom,
   detailAtom,
   deviceAtom,
@@ -41,7 +40,6 @@ import {
   number,
   openDialog,
   panelKeys,
-  refreshDetail,
   sessionHandleAtom,
   sessionSummaryAtom,
   showInspector,
@@ -61,14 +59,6 @@ const tabs = [
   { id: "tools", label: "Tools", icon: Wrench },
   { id: "extensions", label: "Extend", icon: Puzzle },
 ];
-
-function configure(patch: Parameters<AgentHandle["configure"]>[0], done?: string) {
-  void attempt(async () => {
-    await store.get(agentHandleAtom)!.configure(patch);
-    await refreshDetail();
-    if (done) notify(done);
-  });
-}
 
 export default function Inspector() {
   const [tab, setTab] = useAtom(tabAtom);
