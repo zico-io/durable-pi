@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import "../styles/style.css";
-import "../styles/network.css";
-import "../styles/jobs.css";
-import "../styles/extensions.css";
+import "../styles/tailwind.css";
 
 export const metadata: Metadata = {
   title: "Durable Pi | Network",

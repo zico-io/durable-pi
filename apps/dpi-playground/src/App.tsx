@@ -210,7 +210,6 @@ function Shell() {
             onPointerDown={resize}
           />
         )}
-        {drawer && <div className="tree-backdrop" onClick={() => setDrawer(false)} />}
         {selected && device && online ? (
           <>
             <Inspector />

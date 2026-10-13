@@ -1,7 +1,6 @@
-import type { CSSProperties } from "react";
+import type { ReactNode } from "react";
 import {
   Archive,
-  ChevronDown,
   ChevronRight,
   CornerDownRight,
   FolderOpen,
@@ -14,10 +13,27 @@ import {
 import type { NetworkDevice } from "@sdk/api";
 import type { TreeNode } from "@sdk/models";
 import DeviceIcon from "./DeviceIcon";
+import {
+  AnimatedSidebarMenuButton,
+  AnimatedSidebarMenuItem,
+  AnimatedSidebarMenuSub,
+  AnimatedSidebarMenuSubButton,
+  AnimatedSidebarMenuSubItem,
+} from "@/components/motion/animated-sidebar";
 import { ago } from "../client/store";
 import { cx } from "../client/cx";
 
 export type TreeAction = "new-session" | "check" | "new-agent" | "rename" | "archive";
+
+export interface TreeContext {
+  expanded: ReadonlySet<string>;
+  collapsed: boolean;
+  isSelected: (node: TreeNode) => boolean;
+  isOnline: (node: TreeNode) => boolean;
+  toggle: (node: TreeNode) => void;
+  activate: (node: TreeNode) => void;
+  action: (node: TreeNode, name: TreeAction) => void;
+}
 
 function statusText(d: NetworkDevice) {
   const count = d.tree?.sessions.length ?? 0;
@@ -40,183 +56,257 @@ function statusText(d: NetworkDevice) {
 export const statusDot = (status?: NetworkDevice["status"]) =>
   status === "online" ? "on" : status === "checking" ? "chk" : status === "offline" ? "off" : "err";
 
-export default function TreeRow({
-  node,
-  depth,
-  open,
-  selected,
-  focused,
-  online,
-  onToggle,
-  onActivate,
-  onAction,
-}: {
-  node: TreeNode;
-  depth: number;
-  open: boolean;
-  selected: boolean;
-  focused: boolean;
-  online: boolean;
-  onToggle: () => void;
-  onActivate: () => void;
-  onAction: (name: TreeAction) => void;
-}) {
-  const hasChildren = node.children.length > 0;
-  const device = node.type === "device" ? node.device : undefined;
-  const session = node.type === "session" ? node.session : undefined;
-  const agent = node.type === "agent" ? node.agent : undefined;
-  const background = session
-    ? session.agents.reduce((n, a) => n + a.background, 0)
-    : (agent?.background ?? 0);
-  const busy = session?.busy || agent?.busy;
-  const dot = statusDot(device?.status);
-  const label = device?.id ?? session?.name ?? agent?.name ?? "";
-  const title = device
-    ? `${device.name} · ${device.url}${device.error ? `\n${device.error}` : ""}`
-    : session
-      ? `${session.name}\n${session.cwd}`
-      : agent!.kind === "fork"
-        ? `Fork of agent #${agent!.parentId} at entry #${agent!.forkedAt}`
-        : agent!.kind === "subagent"
-          ? `Subagent owned by agent #${agent!.ownerAgentId}`
-          : "Root agent";
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
+function titleOf(node: TreeNode) {
+  if (node.type === "device")
+    return `${node.device.name} · ${node.device.url}${node.device.error ? `\n${node.device.error}` : ""}`;
+  if (node.type === "session") return `${node.session.name}\n${node.session.cwd}`;
+  const a = node.agent;
+  return a.kind === "fork"
+    ? `Fork of agent #${a.parentId} at entry #${a.forkedAt}`
+    : a.kind === "subagent"
+      ? `Subagent owned by agent #${a.ownerAgentId}`
+      : "Root agent";
+}
 
+function Act({
+  label,
+  title,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  title: string;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
-    <div
-      className={cx(
-        "tree-row",
-        node.type,
-        selected && "sel",
-        focused && "focus",
-        node.stale && "stale",
-      )}
-      style={{ "--depth": depth } as CSSProperties}
-      role="treeitem"
-      aria-level={depth + 1}
-      aria-expanded={hasChildren ? open : undefined}
-      aria-selected={selected}
-      data-key={node.key}
+    <button
+      type="button"
+      tabIndex={-1}
+      disabled={disabled}
+      aria-label={label}
       title={title}
-      onClick={onActivate}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className="grid size-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-40"
     >
-      {hasChildren ? (
-        <button
-          className="chev"
-          tabIndex={-1}
-          aria-label={open ? `Collapse ${label}` : `Expand ${label}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-        >
-          {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        </button>
-      ) : (
-        <span className="chev" />
+      {children}
+    </button>
+  );
+}
+
+// Hover and keyboard-focus reveal the row's actions over its trailing meta.
+function Acts({ children }: { children: ReactNode }) {
+  return (
+    <span className="absolute inset-y-0 right-1 z-20 hidden items-center gap-0.5 rounded-lg bg-muted pl-1 group-hover/row:flex group-focus-within/row:flex">
+      {children}
+    </span>
+  );
+}
+
+function Indicators({ node }: { node: TreeNode }) {
+  const background =
+    node.type === "session"
+      ? node.session.agents.reduce((n, a) => n + a.background, 0)
+      : node.type === "agent"
+        ? node.agent.background
+        : 0;
+  const busy =
+    node.type === "session" ? node.session.busy : node.type === "agent" && node.agent.busy;
+  return (
+    <>
+      {node.type === "agent" && node.agent.kind === "fork" && node.agent.forkedAt !== undefined && (
+        <span className="shrink-0 text-muted-foreground/80">@ #{node.agent.forkedAt}</span>
       )}
-      {device ? (
-        <>
-          <i className={cx("dot", dot)} />
-          <DeviceIcon device={device} size={16} />
-          <b className="name">{label}</b>
-          <span className="badge">{device.kind}</span>
-          <span className={cx("meta", dot === "err" && "err")}>{statusText(device)}</span>
-          <span className="acts" onClick={stop}>
-            <button
-              className="icon-button"
-              disabled={!online}
-              aria-label={`New session on ${label}`}
+      {busy && <i className="dot work" title="Working" />}
+      {background > 0 && (
+        <span
+          className="bg-count inline-flex shrink-0 items-center gap-1 text-muted-foreground"
+          title={`${background} background task(s)`}
+        >
+          <i className="dot bg" />
+          {background}
+          {node.type === "session" && " bg"}
+        </span>
+      )}
+    </>
+  );
+}
+
+function NodeIcon({ node }: { node: TreeNode }) {
+  if (node.type === "session") return <FolderOpen className="size-3.5" />;
+  if (node.type !== "agent") return null;
+  if (node.agent.kind === "fork") return <GitFork className="size-3.5" />;
+  if (node.agent.kind === "subagent") return <CornerDownRight className="size-3.5" />;
+  return <MessageSquare className="size-3.5 text-primary" />;
+}
+
+function rowClass(node: TreeNode, selected: boolean) {
+  return cx(
+    "tree-row group/row relative",
+    node.type,
+    selected && "sel",
+    node.stale && "stale opacity-55",
+  );
+}
+
+/** A device and, when open, its sessions and agents. */
+export function DeviceRow({
+  node,
+  ctx,
+}: {
+  node: TreeNode & { type: "device" };
+  ctx: TreeContext;
+}) {
+  const d = node.device;
+  const dot = statusDot(d.status);
+  const online = ctx.isOnline(node);
+  const open = ctx.expanded.has(node.key);
+  return (
+    <AnimatedSidebarMenuItem>
+      <div className={rowClass(node, false)} data-key={node.key} title={titleOf(node)}>
+        <AnimatedSidebarMenuButton
+          icon={
+            <span className="relative grid size-5 place-items-center">
+              <DeviceIcon device={d} size={18} />
+              <i
+                className={cx(
+                  "dot absolute -right-0.5 -bottom-0.5 size-2! basis-2! shadow-[0_0_0_2px_var(--color-background)]",
+                  dot,
+                )}
+              />
+            </span>
+          }
+          badge={
+            <span className={cx("text-[11px]", dot === "err" && "text-destructive")}>
+              {statusText(d)}
+            </span>
+          }
+          ariaExpanded={node.children.length && !ctx.collapsed ? open : undefined}
+          onSelect={() => ctx.activate(node)}
+          className={cx("font-semibold", ctx.collapsed && "px-4")}
+        >
+          {d.id}
+        </AnimatedSidebarMenuButton>
+        {!ctx.collapsed && (
+          <Acts>
+            <Act
+              label={`New session on ${d.id}`}
               title="New session on this device"
-              onClick={() => onAction("new-session")}
+              disabled={!online}
+              onClick={() => ctx.action(node, "new-session")}
             >
-              <Plus size={16} />
-            </button>
-            <button
-              className="icon-button"
-              aria-label={`Check ${label}`}
+              <Plus className="size-3.5" />
+            </Act>
+            <Act
+              label={`Check ${d.id}`}
               title="Check connection now"
-              onClick={() => onAction("check")}
+              onClick={() => ctx.action(node, "check")}
             >
-              <RefreshCw size={16} />
-            </button>
+              <RefreshCw className="size-3.5" />
+            </Act>
+          </Acts>
+        )}
+      </div>
+      <AnimatedSidebarMenuSub open={open && node.children.length > 0}>
+        {node.children.map((child) => (
+          <NodeRow key={child.key} node={child} ctx={ctx} />
+        ))}
+      </AnimatedSidebarMenuSub>
+    </AnimatedSidebarMenuItem>
+  );
+}
+
+/** A session or agent, and its nested agents when open. */
+function NodeRow({ node, ctx }: { node: TreeNode; ctx: TreeContext }) {
+  const online = ctx.isOnline(node);
+  const open = ctx.expanded.has(node.key);
+  const hasChildren = node.children.length > 0;
+  const label =
+    node.type === "session" ? node.session.name : node.type === "agent" ? node.agent.name : "";
+  return (
+    <AnimatedSidebarMenuSubItem>
+      <div
+        className={rowClass(node, ctx.isSelected(node))}
+        data-key={node.key}
+        title={titleOf(node)}
+      >
+        <AnimatedSidebarMenuSubButton
+          icon={<NodeIcon node={node} />}
+          isActive={ctx.isSelected(node)}
+          onSelect={() => ctx.activate(node)}
+          className={cx("pr-8 text-[13px]", node.type === "session" && "font-medium")}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="name truncate">{label}</span>
+            {node.type === "session" && (
+              <span className="truncate font-mono text-[11px] text-muted-foreground/80">
+                …/{node.session.cwd.split("/").filter(Boolean).at(-1)}
+              </span>
+            )}
+            <Indicators node={node} />
           </span>
-        </>
-      ) : session ? (
-        <>
-          <FolderOpen className="ico" size={16} />
-          <b className="name">{label}</b>
-          <span className="path">…/{session.cwd.split("/").filter(Boolean).at(-1)}</span>
-          {busy && <i className="dot work" title="Working" />}
-          {background > 0 && (
-            <span className="bg-count" title={`${background} background task(s)`}>
-              <i className="dot bg" />
-              {background} bg
-            </span>
-          )}
-          <span className="acts" onClick={stop}>
-            <button
-              className="icon-button"
-              disabled={!online}
-              aria-label={`New agent in ${label}`}
-              title="New agent in this session"
-              onClick={() => onAction("new-agent")}
-            >
-              <Plus size={16} />
-            </button>
-            <button
-              className="icon-button"
-              disabled={!online}
-              aria-label={`Rename session ${label}`}
-              title="Rename session"
-              onClick={() => onAction("rename")}
-            >
-              <Pencil size={16} />
-            </button>
-            <button
-              className="icon-button"
-              disabled={!online}
-              aria-label={`Archive session ${label}`}
-              title="Archive session"
-              onClick={() => onAction("archive")}
-            >
-              <Archive size={16} />
-            </button>
-          </span>
-        </>
-      ) : agent ? (
-        <>
-          {agent.kind === "fork" ? (
-            <GitFork className="ico" size={16} />
-          ) : agent.kind === "subagent" ? (
-            <CornerDownRight className="ico" size={16} />
+        </AnimatedSidebarMenuSubButton>
+        {hasChildren && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label={open ? `Collapse ${label}` : `Expand ${label}`}
+            onClick={() => ctx.toggle(node)}
+            className="absolute inset-y-0 right-1 z-10 my-auto grid size-6 place-items-center rounded-md text-muted-foreground hover:text-foreground"
+          >
+            <ChevronRight className={cx("size-3.5 transition-transform", open && "rotate-90")} />
+          </button>
+        )}
+        <Acts>
+          {node.type === "session" ? (
+            <>
+              <Act
+                label={`New agent in ${label}`}
+                title="New agent in this session"
+                disabled={!online}
+                onClick={() => ctx.action(node, "new-agent")}
+              >
+                <Plus className="size-3.5" />
+              </Act>
+              <Act
+                label={`Rename session ${label}`}
+                title="Rename session"
+                disabled={!online}
+                onClick={() => ctx.action(node, "rename")}
+              >
+                <Pencil className="size-3.5" />
+              </Act>
+              <Act
+                label={`Archive session ${label}`}
+                title="Archive session"
+                disabled={!online}
+                onClick={() => ctx.action(node, "archive")}
+              >
+                <Archive className="size-3.5" />
+              </Act>
+            </>
           ) : (
-            <MessageSquare className="ico root" size={16} />
-          )}
-          <span className="name">{label}</span>
-          {agent.kind === "fork" && agent.forkedAt !== undefined && (
-            <span className="meta">@ #{agent.forkedAt}</span>
-          )}
-          {busy && <i className="dot work" title="Working" />}
-          {background > 0 && (
-            <span className="bg-count" title={`${background} background task(s)`}>
-              <i className="dot bg" />
-              {background}
-            </span>
-          )}
-          <span className="acts" onClick={stop}>
-            <button
-              className="icon-button"
-              disabled={!online}
-              aria-label={`Rename agent ${label}`}
+            <Act
+              label={`Rename agent ${label}`}
               title="Rename agent"
-              onClick={() => onAction("rename")}
+              disabled={!online}
+              onClick={() => ctx.action(node, "rename")}
             >
-              <Pencil size={16} />
-            </button>
-          </span>
-        </>
-      ) : null}
-    </div>
+              <Pencil className="size-3.5" />
+            </Act>
+          )}
+        </Acts>
+      </div>
+      <AnimatedSidebarMenuSub open={open && hasChildren} className="ml-2.5 pl-2">
+        {node.children.map((child) => (
+          <NodeRow key={child.key} node={child} ctx={ctx} />
+        ))}
+      </AnimatedSidebarMenuSub>
+    </AnimatedSidebarMenuSubItem>
   );
 }

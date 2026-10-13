@@ -15,13 +15,6 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-.net-workspace > .network-sidebar {
-  width: var(--tree-w);
-  flex: 0 0 auto;
-}
-.net-workspace > .network-sidebar.collapsed {
-  width: var(--rail-w);
-}
 .net-workspace > .inspector {
   width: var(--inspector-w);
   flex: 0 0 auto;
@@ -47,7 +40,6 @@
 }
 .tree-toggle,
 .inspector-toggle,
-.tree-backdrop,
 .inspector-backdrop {
   display: none;
 }
@@ -66,7 +58,6 @@
 .panel-rail .panel-toggle {
   margin-bottom: 6px;
 }
-.rail-device,
 .rail-tab {
   position: relative;
   width: 38px;
@@ -74,7 +65,6 @@
   border-radius: 8px;
   color: var(--muted);
 }
-.rail-device:hover,
 .rail-tab:hover {
   background: #ffffff0a;
   color: #f2eeee;
@@ -82,15 +72,6 @@
 .rail-tab.active {
   color: var(--accent);
   background: #ff899714;
-}
-.rail-device .dot {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 8px;
-  height: 8px;
-  flex-basis: 8px;
-  box-shadow: 0 0 0 2px #181213;
 }
 .rail-tab .count {
   position: absolute;
@@ -121,171 +102,7 @@
   color: #e9e2e2;
 }
 
-/* ---------------------------------------------------------------- tree */
-.network-sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: #181213;
-  border-right: 1px solid var(--line);
-}
-.tree-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px 10px 16px;
-  color: var(--muted);
-  font-size: 14px;
-  letter-spacing: 1.6px;
-  font-weight: 650;
-}
-.tree-head span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.tree-list {
-  flex: 1;
-  overflow: auto;
-  padding: 4px 6px 12px;
-  outline: none;
-  scrollbar-width: thin;
-  scrollbar-color: #473537 transparent;
-}
-.tree-list:focus-visible {
-  box-shadow: inset 0 0 0 1px #856669;
-}
-.tree-empty {
-  padding: 12px 10px;
-}
-.tree-row {
-  --depth: 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 34px;
-  padding: 3px 6px 3px calc(4px + var(--depth) * 16px);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 15px;
-  color: #e9e2e2;
-  white-space: nowrap;
-}
-.tree-row:hover {
-  background: #ffffff08;
-}
-.tree-row.focus {
-  box-shadow: inset 0 0 0 1px #6d5557;
-}
-.tree-row.sel {
-  background: #ff899714;
-}
-.tree-row.sel::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 5px;
-  bottom: 5px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-.tree-row.stale {
-  opacity: 0.55;
-}
-.tree-row .chev {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  flex: 0 0 18px;
-  color: var(--muted);
-}
-.tree-row span.chev {
-  display: inline-block;
-}
-.tree-row .name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-.tree-row.device .name {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 15px;
-}
-.tree-row.session .name {
-  font-weight: 600;
-}
-.tree-row .ico {
-  flex: 0 0 auto;
-  color: var(--muted);
-}
-.tree-row .ico.root {
-  color: var(--accent);
-}
-.tree-row .badge {
-  font-size: 12px;
-  border: 1px solid #443738;
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--muted);
-  font-family: "IBM Plex Mono", monospace;
-}
-.tree-row .meta,
-.tree-row .path {
-  font-size: 13px;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-.tree-row .path {
-  font-family: "IBM Plex Mono", monospace;
-  flex: 1;
-}
-.tree-row .meta.err {
-  color: #ff8a80;
-}
-.tree-row .acts {
-  margin-left: auto;
-  display: none;
-  gap: 2px;
-  background: #181213;
-  border-radius: 6px;
-}
-.tree-row:hover .acts,
-.tree-row.focus .acts {
-  display: inline-flex;
-}
-.tree-row:hover .acts ~ *,
-.tree-row .acts .icon-button {
-  width: 26px;
-  height: 26px;
-}
-.tree-row .acts .icon-button:disabled {
-  opacity: 0.35;
-  background: none;
-}
-.tree-row .bg-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--muted);
-}
-.tree-row > .dot.work,
-.tree-row > .bg-count {
-  margin-left: auto;
-}
-.tree-row > .dot.work + .bg-count {
-  margin-left: 6px;
-}
-.tree-row:hover > .dot.work,
-.tree-row:hover > .bg-count,
-.tree-row.focus > .dot.work,
-.tree-row.focus > .bg-count {
-  display: none;
-}
+/* ---------------------------------------------------------------- tree status dots */
 .dot {
   width: 9px;
   height: 9px;
@@ -570,33 +387,16 @@
     background: #0d080899;
   }
 }
-@media (max-width: 760px) {
+/* The network sidebar turns into a sheet at its own 767px breakpoint. */
+@media (max-width: 767px) {
   .tree-resizer {
     display: none;
   }
   .tree-toggle {
     display: inline-flex;
   }
-  .net-workspace > .network-sidebar {
-    display: none;
-  }
-  .net-workspace > .network-sidebar.open {
-    display: flex;
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: min(340px, 90vw);
-    z-index: 40;
-    box-shadow: 20px 0 60px #0008;
-  }
-  .tree-backdrop {
-    display: block;
-    position: absolute;
-    inset: 0;
-    z-index: 39;
-    background: #0d080899;
-  }
+}
+@media (max-width: 760px) {
   .network-summary,
   .new-agent-button {
     display: none !important;
